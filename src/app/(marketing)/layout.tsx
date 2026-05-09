@@ -3,7 +3,13 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useScrollDirection } from '@/lib/hooks/useScrollDirection';
-import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { 
+  SignInButton, 
+  SignUpButton, 
+  UserButton, 
+  SignedIn, 
+  SignedOut 
+} from "@clerk/nextjs";
 
 export default function MarketingLayout({
   children,
