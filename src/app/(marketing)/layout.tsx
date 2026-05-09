@@ -63,17 +63,27 @@ export default function MarketingLayout({
 
       {/* Footer */}
       <footer className="border-t border-white/10 bg-[#000] pt-12 pb-8">
-        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-gray-500">
-          <div className="flex items-center gap-3">
-            <img src="https://i.ibb.co/HDHsqdqL/1000100954.png" alt="Devlynix" className="w-6 h-6 grayscale opacity-70" />
-            <span className="font-bold text-white">Devlynix © {new Date().getFullYear()}</span>
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-sm text-gray-500 mb-8">
+            <div className="flex items-center gap-3">
+              <img src="https://i.ibb.co/HDHsqdqL/1000100954.png" alt="Devlynix" className="w-6 h-6 grayscale opacity-70" />
+              <span className="font-bold text-white">Devlynix © {new Date().getFullYear()}</span>
+            </div>
+            
+            <div className="flex flex-wrap justify-center items-center gap-8">
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              <a href="mailto:devlynix@gmail.com" className="hover:text-[#C6FF00] transition-colors font-mono">devlynix@gmail.com</a>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <a href="https://www.linkedin.com/company/devlynix/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">LinkedIn</a>
+              <a href="https://github.com/yashharfode" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">GitHub</a>
+            </div>
           </div>
-          <div className="flex items-center gap-6">
-            <a href="https://www.linkedin.com/company/devlynix/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">LinkedIn</a>
-            <a href="https://github.com/yashharfode" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">GitHub</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#C6FF00] animate-pulse"></span> Systems Active
+          
+          <div className="flex justify-center items-center gap-2 text-xs text-gray-600 border-t border-white/5 pt-8">
+            <span className="w-2 h-2 rounded-full bg-[#C6FF00] animate-pulse"></span> Systems Active • Secured for Engineers
           </div>
         </div>
       </footer>
