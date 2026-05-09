@@ -3,10 +3,9 @@
 import React, { useState } from 'react';
 import { FolderGit2, Trophy, Zap, Check } from 'lucide-react';
 import { useIntersectionObserver } from '@/lib/hooks/useIntersectionObserver';
-import { useUser } from '@clerk/nextjs';
 
 export default function HubPage() {
-  const { isLoaded, user } = useUser();
+  const user = { firstName: "Yash", streak: 14 };
   useIntersectionObserver();
   const [claimedProjects, setClaimedProjects] = useState<number[]>([]);
 
@@ -20,14 +19,6 @@ export default function HubPage() {
       setClaimedProjects([...claimedProjects, id]);
     }
   };
-
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#030303]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#C6FF00] border-t-transparent"></div>
-      </div>
-    );
-  }
 
   return (
     <section id="hub" className="min-h-[80vh] pt-32 pb-20 bg-[#050505] relative border-b border-white/5">
