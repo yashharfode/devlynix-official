@@ -3,7 +3,7 @@
 import React from 'react';
 import { LayoutDashboard, Zap } from 'lucide-react';
 import { useScrollDirection } from '@/lib/hooks/useScrollDirection';
-import { UserButton, SignedIn } from "@clerk/nextjs";
+import * as Clerk from "@clerk/nextjs";
 
 export default function ProtectedLayout({
   children,
@@ -22,15 +22,15 @@ export default function ProtectedLayout({
           </div>
           
           <div className="flex items-center gap-8">
-            <SignedIn>
+            <Clerk.SignedIn>
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-end">
                   <span className="text-sm font-bold text-white">Builder</span>
                   <span className="text-xs text-[#C6FF00] flex items-center gap-1"><Zap className="w-3 h-3"/> 14 Day Streak</span>
                 </div>
-                <UserButton />
+                <Clerk.UserButton />
               </div>
-            </SignedIn>
+            </Clerk.SignedIn>
           </div>
         </div>
       </nav>

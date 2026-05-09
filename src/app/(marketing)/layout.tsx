@@ -3,13 +3,7 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useScrollDirection } from '@/lib/hooks/useScrollDirection';
-import { 
-  SignInButton, 
-  SignUpButton, 
-  UserButton, 
-  SignedIn, 
-  SignedOut 
-} from "@clerk/nextjs";
+import * as Clerk from "@clerk/nextjs";
 
 export default function MarketingLayout({
   children,
@@ -33,23 +27,23 @@ export default function MarketingLayout({
             <a href="#platform" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Platform</a>
             <a href="#pricing" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</a>
             <a href="#faq" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</a>
-            <SignedIn>
+            <Clerk.SignedIn>
               <a href="/hub" className="text-sm font-medium text-[#C6FF00] hover:text-white transition-colors">Builder Hub</a>
-            </SignedIn>
+            </Clerk.SignedIn>
           </div>
 
           <div className="hidden items-center gap-4 md:flex">
-            <SignedOut>
-              <SignInButton mode="modal">
+            <Clerk.SignedOut>
+              <Clerk.SignInButton mode="modal">
                 <button className="text-sm font-medium text-white hover:text-[#C6FF00] transition-colors">Log in</button>
-              </SignInButton>
-              <SignUpButton mode="modal">
+              </Clerk.SignInButton>
+              <Clerk.SignUpButton mode="modal">
                 <button className="rounded-lg bg-[#C6FF00] px-5 py-2 text-sm font-bold text-black transition-all hover:scale-105 shadow-[0_0_15px_rgba(198,255,0,0.2)]">Sign Up</button>
-              </SignUpButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
+              </Clerk.SignUpButton>
+            </Clerk.SignedOut>
+            <Clerk.SignedIn>
+              <Clerk.UserButton />
+            </Clerk.SignedIn>
           </div>
 
           <button className="md:hidden text-white z-50 p-2" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
