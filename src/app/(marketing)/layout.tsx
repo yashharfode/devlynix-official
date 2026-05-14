@@ -31,7 +31,7 @@ export default function MarketingLayout({
           </div>
 
           <div className="hidden items-center gap-4 md:flex">
-            <Link href="/hub" className="rounded-lg bg-[#C6FF00] px-5 py-2 text-sm font-bold text-black transition-all hover:scale-105 shadow-[0_0_15px_rgba(198,255,0,0.2)]">
+            <Link href="/auth/login" className="rounded-lg bg-[#C6FF00] px-5 py-2 text-sm font-bold text-black transition-all hover:scale-105 shadow-[0_0_15px_rgba(198,255,0,0.2)]">
               Enter Hub (Demo)
             </Link>
           </div>
@@ -51,7 +51,7 @@ export default function MarketingLayout({
             <div className="w-full h-px bg-white/10 my-4"></div>
             
             <div className="w-full flex flex-col gap-4">
-              <Link href="/hub" onClick={() => setIsMobileMenuOpen(false)} className="w-full py-4 rounded-xl bg-[#C6FF00] text-black font-bold text-lg text-center">
+              <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full py-4 rounded-xl bg-[#C6FF00] text-black font-bold text-lg text-center">
                 Enter Hub (Demo)
               </Link>
             </div>
