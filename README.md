@@ -1,6 +1,6 @@
 # Devlynix | Code. Ship. Dominate.
 
-Check it out: devlynix.xyz
+Check it out: https://devlynix.xyz
 
 ## 🛠️ Tech Stack
 - **Framework**: Next.js 15+ (App Router)
