@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 
 // Verify admin role helper
 async function verifyAdmin() {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) return false;
   
   const user = await prisma.user.findUnique({
