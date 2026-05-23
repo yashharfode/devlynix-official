@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   ShieldAlert,
-  Building2
+  Building2,
+  Trophy
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,32 +30,37 @@ export default function ProtectedLayout({
   const { getToken } = useAuth();
   
   const [streakDays, setStreakDays] = useState<number | null>(null);
+  const [xp, setXp] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    const fetchStreak = async () => {
+    const fetchStats = async () => {
       try {
         const token = await getToken({ template: 'supabase' });
         if (!token) return;
         const client = createClerkSupabaseClient(token);
         const { data, error } = await client
           .from('profiles')
-          .select('streak_days')
+          .select('streak_days, xp')
           .eq('clerk_user_id', user.id)
           .maybeSingle();
-        if (data) setStreakDays(data.streak_days ?? 0);
+        if (data) {
+          setStreakDays(data.streak_days ?? 0);
+          setXp(data.xp ?? 0);
+        }
       } catch (err) {
-        console.error('Failed to fetch streak:', err);
+        console.error('Failed to fetch stats:', err);
       }
     };
-    fetchStreak();
+    fetchStats();
   }, [user, getToken]);
 
   const userRole = user?.publicMetadata?.role as string | undefined;
 
   const navItems = [
     { name: 'Hub', href: '/hub', icon: Home },
+    { name: 'Community', href: '/community', icon: Trophy },
     { name: 'Hackathons', href: '/hackathons', icon: Terminal },
     { name: 'Projects', href: '/projects', icon: Briefcase },
     { name: 'Profile', href: '/profile', icon: UserIcon },
@@ -83,7 +89,7 @@ export default function ProtectedLayout({
       </div>
 
       {/* Sidebar */}
-      <aside className={`
+      <aside className={`scrollbar-theme
         fixed md:static inset-y-0 left-0 z-40 w-64 border-r border-white/5 bg-[#0A0A0A] transition-transform duration-300 ease-in-out flex flex-col
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
       `}>
@@ -92,7 +98,7 @@ export default function ProtectedLayout({
           <span className="text-xl font-bold tracking-tight text-white">Devlynix</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2 mt-16 md:mt-0">
+        <div className="scrollbar-theme flex-1 overflow-y-auto py-6 px-4 space-y-2 mt-16 md:mt-0">
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
@@ -115,18 +121,25 @@ export default function ProtectedLayout({
             <UserButton afterSignOutUrl="/sign-in" />
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-bold truncate">{user?.firstName || 'Builder'}</span>
-              {streakDays !== null && (
-                <span className="text-xs text-[#C6FF00] flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> {streakDays} Day Streak
-                </span>
-              )}
+              <div className="flex items-center gap-2 mt-0.5">
+                {streakDays !== null && (
+                  <span className="text-[10px] text-emerald-500 flex items-center gap-1 font-mono bg-emerald-900/20 px-1.5 py-0.5 rounded border border-emerald-900/30">
+                    <Zap className="w-3 h-3" /> {streakDays}
+                  </span>
+                )}
+                {xp !== null && (
+                  <span className="text-[10px] text-emerald-500 flex items-center gap-1 font-mono bg-emerald-900/20 px-1.5 py-0.5 rounded border border-emerald-900/30">
+                    <Trophy className="w-3 h-3" /> {xp} XP
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 relative overflow-y-auto pt-16 md:pt-0">
+      <main className="scrollbar-theme flex-1 relative overflow-y-auto pt-16 md:pt-0">
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
           backgroundSize: "40px 40px",
           backgroundImage: "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)"
