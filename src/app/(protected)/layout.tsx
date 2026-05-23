@@ -1,22 +1,31 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Zap } from 'lucide-react';
-import { useScrollDirection } from '@/lib/hooks/useScrollDirection';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { UserButton, useUser, useAuth } from '@clerk/nextjs';
 import { createClerkSupabaseClient } from '@/lib/supabase';
+import { 
+  Zap, 
+  Home, 
+  Terminal, 
+  PlusCircle,
+  Menu,
+  X
+} from 'lucide-react';
+import Link from 'next/link';
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const scrollDirection = useScrollDirection();
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useUser();
   const { getToken } = useAuth();
+  
   const [streakDays, setStreakDays] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -42,29 +51,88 @@ export default function ProtectedLayout({
     fetchStreak();
   }, [user, getToken]);
 
-  return (
-    <div className="flex min-h-screen flex-col bg-[#030303]">
-      <nav className={`fixed top-0 w-full z-50 border-b border-white/5 bg-[#030303]/90 backdrop-blur-2xl transition-transform duration-500 ${scrollDirection === "down" ? "-translate-y-full" : "translate-y-0"}`}>
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => router.push('/hub')}>
-            <img src="https://i.ibb.co/HDHsqdqL/1000100954.png" alt="Devlynix" className="h-8 w-8 object-contain transition-transform group-hover:rotate-12" />
-            <span className="text-xl font-bold tracking-tight text-white">Devlynix</span>
-          </div>
+  const navItems = [
+    { name: 'Hub', href: '/hub', icon: Home },
+    { name: 'Hackathons', href: '/hackathons', icon: Terminal },
+    { name: 'Host Hackathon', href: '/host', icon: PlusCircle },
+  ];
 
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex flex-col items-end">
-              <span className="text-sm font-bold text-white">{user?.firstName || 'Builder'}</span>
-              {streakDays !== null && (
-                <span className="text-xs text-[#C6FF00] flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> {streakDays} Day Streak
-                </span>
-              )}
-            </div>
+  return (
+    <div className="flex h-screen overflow-hidden bg-[#030303] text-white">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-white/5 bg-[#030303]/90 backdrop-blur-xl z-50 flex items-center justify-between px-4">
+        <div className="flex items-center gap-2" onClick={() => router.push('/hub')}>
+          <img src="https://i.ibb.co/HDHsqdqL/1000100954.png" alt="Devlynix" className="h-8 w-8 object-contain" />
+          <span className="font-bold">Devlynix</span>
+        </div>
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-[#B3B4BD] hover:text-white">
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <aside className={`scrollbar-theme
+        fixed md:static inset-y-0 left-0 z-40 w-64 border-r border-white/5 bg-[#0A0A0A] transition-transform duration-300 ease-in-out flex flex-col
+        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
+      `}>
+        <div className="hidden md:flex h-20 items-center gap-3 px-6 cursor-pointer group" onClick={() => router.push('/hub')}>
+          <img src="https://i.ibb.co/HDHsqdqL/1000100954.png" alt="Devlynix" className="h-8 w-8 object-contain transition-transform group-hover:rotate-12" />
+          <span className="text-xl font-bold tracking-tight text-white">Devlynix</span>
+        </div>
+
+        <div className="scrollbar-theme flex-1 overflow-y-auto py-6 px-4 space-y-2 mt-16 md:mt-0">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  isActive 
+                    ? 'bg-[#C6FF00]/10 text-[#C6FF00] font-medium border border-[#C6FF00]/20' 
+                    : 'text-[#B3B4BD] hover:bg-white/5 hover:text-white border border-transparent'
+                }`}>
+                  <item.icon className="w-5 h-5" />
+                  {item.name}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="p-4 border-t border-white/5">
+          <div className="flex items-center gap-3 bg-[#111] p-3 rounded-xl border border-white/5">
             <UserButton />
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-bold truncate">{user?.firstName || 'Builder'}</span>
+              <div className="flex items-center gap-2 mt-0.5">
+                {streakDays !== null && (
+                  <span className="text-[10px] text-[#C6FF00] flex items-center gap-1 font-mono bg-[#C6FF00]/10 px-1.5 py-0.5 rounded border border-[#C6FF00]/20">
+                    <Zap className="w-3 h-3" /> {streakDays}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </nav>
-      <main className="flex-1">{children}</main>
+      </aside>
+
+      {/* Main Content */}
+      <main className="scrollbar-theme flex-1 relative overflow-y-auto pt-16 md:pt-0">
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+          backgroundSize: "40px 40px",
+          backgroundImage: "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)"
+        }} />
+        <div className="relative z-10 h-full">
+          {children}
+        </div>
+      </main>
+
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
     </div>
   );
 }
