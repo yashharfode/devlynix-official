@@ -36,7 +36,8 @@ export async function approveOrganizer(applicationId: string, applicantUserId: s
     });
 
     // 3. Update Clerk publicMetadata to sync sessionClaims
-    await clerkClient().users.updateUserMetadata(clerkUserId, {
+    const client = await clerkClient();
+    await client.users.updateUserMetadata(clerkUserId, {
       publicMetadata: {
         role: "ORGANIZER"
       }
