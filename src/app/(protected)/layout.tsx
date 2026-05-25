@@ -8,9 +8,14 @@ import {
   Zap, 
   Home, 
   Terminal, 
-  PlusCircle,
+  Briefcase, 
+  User as UserIcon,
+  Settings,
   Menu,
-  X
+  X,
+  ShieldAlert,
+  Building2,
+  Trophy
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -25,37 +30,50 @@ export default function ProtectedLayout({
   const { getToken } = useAuth();
   
   const [streakDays, setStreakDays] = useState<number | null>(null);
+  const [xp, setXp] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    const fetchStreak = async () => {
+    const fetchStats = async () => {
       try {
         const token = await getToken({ template: 'supabase' });
         if (!token) return;
         const client = createClerkSupabaseClient(token);
         const { data, error } = await client
           .from('profiles')
-          .select('streak_days')
+          .select('streak_days, xp')
           .eq('clerk_user_id', user.id)
           .maybeSingle();
-        if (error) {
-          console.error("Supabase error:", JSON.stringify(error, null, 2));
-          throw error;
+        if (data) {
+          setStreakDays(data.streak_days ?? 0);
+          setXp(data.xp ?? 0);
         }
-        if (data) setStreakDays(data.streak_days ?? 0);
       } catch (err) {
-        console.error('Failed to fetch streak:', err);
+        console.error('Failed to fetch stats:', err);
       }
     };
-    fetchStreak();
+    fetchStats();
   }, [user, getToken]);
+
+  const userRole = user?.publicMetadata?.role as string | undefined;
 
   const navItems = [
     { name: 'Hub', href: '/hub', icon: Home },
+    { name: 'Community', href: '/community', icon: Trophy },
     { name: 'Hackathons', href: '/hackathons', icon: Terminal },
-    { name: 'Host Hackathon', href: '/host', icon: PlusCircle },
+    { name: 'Projects', href: '/projects', icon: Briefcase },
+    { name: 'Profile', href: '/profile', icon: UserIcon },
+    { name: 'Settings', href: '/settings', icon: Settings },
   ];
+
+  if (userRole === 'ADMIN') {
+    navItems.push({ name: 'Admin Console', href: '/applications', icon: ShieldAlert });
+  } else if (userRole === 'ORGANIZER') {
+    navItems.push({ name: 'Organizer Dashboard', href: '/organizer', icon: Building2 });
+  } else {
+    navItems.push({ name: 'Host a Hackathon', href: '/apply-to-host', icon: Building2 });
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#030303] text-white">
@@ -65,7 +83,7 @@ export default function ProtectedLayout({
           <img src="https://i.ibb.co/HDHsqdqL/1000100954.png" alt="Devlynix" className="h-8 w-8 object-contain" />
           <span className="font-bold">Devlynix</span>
         </div>
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-[#B3B4BD] hover:text-white">
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-gray-400 hover:text-white">
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
@@ -82,13 +100,13 @@ export default function ProtectedLayout({
 
         <div className="scrollbar-theme flex-1 overflow-y-auto py-6 px-4 space-y-2 mt-16 md:mt-0">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const isActive = pathname.startsWith(item.href);
             return (
               <Link key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
                 <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   isActive 
-                    ? 'bg-[#C6FF00]/10 text-[#C6FF00] font-medium border border-[#C6FF00]/20' 
-                    : 'text-[#B3B4BD] hover:bg-white/5 hover:text-white border border-transparent'
+                    ? 'bg-[#C6FF00]/10 text-[#C6FF00] font-medium' 
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
                 }`}>
                   <item.icon className="w-5 h-5" />
                   {item.name}
@@ -100,13 +118,18 @@ export default function ProtectedLayout({
 
         <div className="p-4 border-t border-white/5">
           <div className="flex items-center gap-3 bg-[#111] p-3 rounded-xl border border-white/5">
-            <UserButton />
+            <UserButton afterSignOutUrl="/sign-in" />
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-bold truncate">{user?.firstName || 'Builder'}</span>
               <div className="flex items-center gap-2 mt-0.5">
                 {streakDays !== null && (
-                  <span className="text-[10px] text-[#C6FF00] flex items-center gap-1 font-mono bg-[#C6FF00]/10 px-1.5 py-0.5 rounded border border-[#C6FF00]/20">
+                  <span className="text-[10px] text-emerald-500 flex items-center gap-1 font-mono bg-emerald-900/20 px-1.5 py-0.5 rounded border border-emerald-900/30">
                     <Zap className="w-3 h-3" /> {streakDays}
+                  </span>
+                )}
+                {xp !== null && (
+                  <span className="text-[10px] text-emerald-500 flex items-center gap-1 font-mono bg-emerald-900/20 px-1.5 py-0.5 rounded border border-emerald-900/30">
+                    <Trophy className="w-3 h-3" /> {xp} XP
                   </span>
                 )}
               </div>
