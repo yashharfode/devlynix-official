@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { SignedIn, SignedOut } from '@clerk/nextjs';
+import Link from 'next/link';
 
 export const HeroSection = ({ onSignUp }: { onSignUp: () => void }) => {
   const [terminalLines, setTerminalLines] = useState<{ text: string, type: string, delay?: number }[]>([]);
@@ -54,9 +56,16 @@ export const HeroSection = ({ onSignUp }: { onSignUp: () => void }) => {
           </p>
           
           <div className="flex flex-col gap-4 sm:flex-row w-full sm:w-auto">
-            <button onClick={onSignUp} className="group flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-base sm:text-lg font-bold text-black transition-all hover:bg-[#C6FF00] hover:shadow-[0_0_30px_rgba(198,255,0,0.5)]">
-              Start Executing <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </button>
+            <SignedOut>
+              <button onClick={onSignUp} className="group flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-base sm:text-lg font-bold text-black transition-all hover:bg-[#C6FF00] hover:shadow-[0_0_40px_rgba(198,255,0,0.6)] hover:-translate-y-1">
+                Start Executing <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
+              </button>
+            </SignedOut>
+            <SignedIn>
+              <Link href="/hub" className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#C6FF00] to-green-400 px-8 py-4 text-base sm:text-lg font-bold text-black transition-all hover:shadow-[0_0_40px_rgba(198,255,0,0.6)] hover:-translate-y-1">
+                Go to Dashboard <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
+              </Link>
+            </SignedIn>
           </div>
         </div>
 
