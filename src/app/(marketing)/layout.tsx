@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useScrollDirection } from '@/lib/hooks/useScrollDirection';
 import Link from 'next/link';
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 
 export default function MarketingLayout({
   children,
@@ -38,19 +38,19 @@ export default function MarketingLayout({
 
           {/* Desktop: CTA / avatar */}
           <div className="hidden md:flex items-center gap-4">
-            <SignedOut>
+            <Show when="signed-out">
               <SignInButton>
                 <button className="rounded-lg bg-[#C6FF00] px-5 py-2 text-sm font-bold text-black transition-all hover:scale-105 shadow-[0_0_15px_rgba(198,255,0,0.2)]">
                   Enter Hub
                 </button>
               </SignInButton>
-            </SignedOut>
-            <SignedIn>
+            </Show>
+            <Show when="signed-in">
               <Link href="/hub" className="rounded-lg bg-white/10 border border-white/20 px-5 py-2 text-sm font-bold text-white transition-all hover:bg-white/20">
                 Dashboard
               </Link>
               <UserButton />
-            </SignedIn>
+            </Show>
           </div>
 
           {/* ── Mobile: Builder Hub link + Enter Hub button + hamburger ── */}
@@ -64,19 +64,19 @@ export default function MarketingLayout({
             </Link>
 
             {/* Enter Hub / Avatar — always visible in bar */}
-            <SignedOut>
+            <Show when="signed-out">
               <SignInButton>
                 <button className="rounded-lg bg-[#C6FF00] px-3 py-1.5 text-xs font-bold text-black whitespace-nowrap shadow-[0_0_12px_rgba(198,255,0,0.3)] hover:bg-[#d4ff33] active:scale-95 transition-all">
                   Enter Hub
                 </button>
               </SignInButton>
-            </SignedOut>
-            <SignedIn>
+            </Show>
+            <Show when="signed-in">
               <Link href="/hub" className="rounded-lg bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-white/20">
                 Dashboard
               </Link>
               <UserButton />
-            </SignedIn>
+            </Show>
 
             {/* Hamburger — only toggles nav-links dropdown */}
             <button
