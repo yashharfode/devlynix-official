@@ -4,6 +4,7 @@ import { FeaturedMemberForm } from "./FeaturedMemberForm";
 import { FeaturedMemberList } from "./FeaturedMemberList";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
 export default async function FeaturedMembersAdminPage() {
   const members = await prisma.featuredMember.findMany({
     orderBy: { created_at: "desc" }

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Trophy, Medal, Star, Zap, Users, Briefcase, ExternalLink, GitBranch, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
 export default async function HallOfFamePage() {
   // Fetch top 50 users ranked by XP
   const topUsers = await prisma.user.findMany({

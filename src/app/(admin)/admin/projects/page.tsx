@@ -4,6 +4,7 @@ import { WinnerToggle } from "./WinnerToggle";
 import { ProjectDisplayForm } from "./ProjectDisplayForm";
 import { formatDistanceToNow } from "date-fns";
 
+export const dynamic = "force-dynamic";
 export default async function AdminProjectsPage() {
   const projects = await prisma.projectSubmission.findMany({
     orderBy: { created_at: "desc" },
