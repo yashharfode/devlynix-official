@@ -8,6 +8,86 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id                    String                 @id @default(uuid())
+  clerk_user_id         String                 @unique
+  email                 String?
+  full_name             String?
+  username              String?                @unique
+  bio                   String?
+  college               String?
+  year_of_study         String?
+  primary_role          String?
+  experience            String?
+  skills                String[]
+  interests             String[]
+  github_url            String?
+  linkedin_url          String?
+  portfolio_url         String?
+  xp                    Int                    @default(0)
+  streak_days           Int                    @default(0)
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  role                  Role                   @default(HACKER)
+  builder_level         String                 @default("Initiate")
+  organizerApplications OrganizerApplication[]
+  submissions           ProjectSubmission[]
+
+  @@map("profiles")
+}
+
+model OrganizerApplication {
+  id           String            @id @default(uuid())
+  company_name String
+  website      String?
+  description  String
+  status       ApplicationStatus @default(PENDING)
+  user_id      String
+  created_at   DateTime          @default(now())
+  updated_at   DateTime          @updatedAt
+  user         User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("organizer_applications")
+}
+
+model Hackathon {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title             String    @db.VarChar(255)
+  tagline           String?   @db.VarChar(255)
+  description       String?
+  organization_name String    @db.VarChar(255)
+  theme             String?   @db.VarChar(100)
+  mode              String?   @default("Online") @db.VarChar(50)
+  start_date        DateTime  @db.Timestamptz(6)
+  end_date          DateTime  @db.Timestamptz(6)
+  prize_pool        String?   @db.VarChar(100)
+  max_team_size     Int?      @default(4)
+  approval_status   String?   @default("PENDING") @db.VarChar(50)
+  is_featured       Boolean?  @default(false)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  requested_by_id   String?
+
+  @@map("hackathons")
+}
+
+model ProjectSubmission {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  demo_url     String?
+  github_url   String
+  thumbnail_url String?
+  category     String?
+  user_id      String
+  hackathon_id String
+  is_winner    Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("project_submissions")
+}
+
 enum Role {
   HACKER
   ORGANIZER
@@ -20,88 +100,22 @@ enum ApplicationStatus {
   REJECTED
 }
 
-// Maps to your existing 'profiles' table from the onboarding flow
-model User {
-  id            String   @id @default(uuid())
-  clerk_user_id String   @unique
-  email         String?
-  full_name     String?
-  username      String?  @unique
-  bio           String?
-  college       String?
-  year_of_study String?
-  primary_role  String?
-  experience    String?
-  skills        String[] 
-  interests     String[]
-  github_url    String?
-  linkedin_url  String?
-  portfolio_url String?
-  xp            Int      @default(0)
-  builder_level String   @default("Initiate")
-  streak_days   Int      @default(0)
-  
-  role          Role     @default(HACKER)
+model FeaturedMember {
+  id                  String   @id @default(uuid())
+  name                String
+  avatar_url          String
+  social_url          String?
+  achievement_title   String
+  category            String
+  project_name        String?
+  project_description String?
+  thumbnail_url       String
+  demo_url            String?
+  github_url          String?
+  event_name          String?
+  date_achieved       DateTime @default(now())
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-
-  submissions   ProjectSubmission[]
-  organizerApplications OrganizerApplication[]
-
-  @@map("profiles")
-}
-
-model OrganizerApplication {
-  id           String            @id @default(uuid())
-  company_name String
-  website      String?
-  description  String
-  status       ApplicationStatus @default(PENDING)
-  
-  user_id      String
-  user         User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
-
-  @@map("organizer_applications")
-}
-
-model Hackathon {
-  id               String   @id @default(uuid())
-  title            String
-  description      String
-  start_date       DateTime
-  end_date         DateTime
-  is_active        Boolean  @default(true)
-  
-  approval_status  String   @default("PENDING")
-  is_featured      Boolean  @default(false)
-  
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
-
-  submissions      ProjectSubmission[]
-
-  @@map("hackathons")
-}
-
-model ProjectSubmission {
-  id           String   @id @default(uuid())
-  title        String
-  description  String
-  demo_url     String?
-  github_url   String
-  
-  user_id      String
-  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  
-  hackathon_id String
-  hackathon    Hackathon @relation(fields: [hackathon_id], references: [id], onDelete: Cascade)
-
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-
-  @@map("project_submissions")
+  @@map("featured_members")
 }

@@ -33,6 +33,9 @@ export default function MarketingLayout({
             <a href="#platform" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Platform</a>
             <a href="#pricing"  className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</a>
             <a href="#faq"      className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</a>
+            <Link href="/hall-of-fame" className="text-sm font-medium text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-1">
+              🏆 Hall of Fame
+            </Link>
             <Link href="/hub"   className="text-sm font-medium text-[#C6FF00] hover:text-white transition-colors">Builder Hub</Link>
           </div>
 
@@ -117,6 +120,13 @@ export default function MarketingLayout({
             >
               FAQ
             </a>
+            <Link
+              href="/hall-of-fame"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="py-3 px-4 text-sm font-semibold text-amber-300 hover:bg-amber-300/5 rounded-xl transition-all"
+            >
+              🏆 Hall of Fame
+            </Link>
             <Link
               href="/hub"
               onClick={() => setIsMobileMenuOpen(false)}

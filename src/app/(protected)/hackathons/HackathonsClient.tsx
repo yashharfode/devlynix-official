@@ -141,7 +141,7 @@ export default function HackathonsClient({ initialHackathons }: { initialHackath
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-20">
           {filteredHackathons.length > 0 ? (
             filteredHackathons.map((hackathon) => (
-              <SpotlightCard key={hackathon.id} isFeatured={hackathon.is_featured} className="group cursor-pointer">
+              <SpotlightCard key={hackathon.id} isFeatured={!!hackathon.is_featured} className="group cursor-pointer">
                 <div className="flex flex-col h-full relative z-10">
                   {/* Image Header */}
                   <div className="h-48 w-full relative overflow-hidden">

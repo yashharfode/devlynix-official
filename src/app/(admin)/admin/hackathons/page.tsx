@@ -96,7 +96,7 @@ export default async function AdminHackathonsPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <form action={toggleFeatured}>
                       <input type="hidden" name="hackathonId" value={h.id} />
-                      <input type="hidden" name="currentFeatured" value={h.is_featured.toString()} />
+                      <input type="hidden" name="currentFeatured" value={String(h.is_featured)} />
                       <button type="submit" className={`p-1.5 rounded-lg transition-colors ${
                         h.is_featured ? 'text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/40' : 'text-gray-600 hover:bg-[#111] hover:text-gray-400'
                       }`}>
@@ -109,7 +109,7 @@ export default async function AdminHackathonsPage() {
                       <input type="hidden" name="hackathonId" value={h.id} />
                       <select 
                         name="status" 
-                        defaultValue={h.approval_status}
+                        defaultValue={h.approval_status || ""}
                         className="bg-[#111] border border-white/5 text-xs rounded-md px-2 py-1 text-gray-300 focus:outline-none focus:border-emerald-500"
                         onChange={(e) => e.target.form?.requestSubmit()}
                       >

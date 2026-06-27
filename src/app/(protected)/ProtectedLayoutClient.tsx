@@ -31,6 +31,7 @@ export default function ProtectedLayoutClient({
   
   const [streakDays, setStreakDays] = useState<number | null>(null);
   const [xp, setXp] = useState<number | null>(null);
+  const [dbRole, setDbRole] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -42,12 +43,13 @@ export default function ProtectedLayoutClient({
         const client = createClerkSupabaseClient(token);
         const { data, error } = await client
           .from('profiles')
-          .select('streak_days, xp')
+          .select('streak_days, xp, role')
           .eq('clerk_user_id', user.id)
           .maybeSingle();
         if (data) {
           setStreakDays(data.streak_days ?? 0);
           setXp(data.xp ?? 0);
+          if (data.role) setDbRole(data.role);
         }
       } catch (err) {
         console.error('Failed to fetch stats:', err);
@@ -56,7 +58,7 @@ export default function ProtectedLayoutClient({
     fetchStats();
   }, [user, getToken]);
 
-  const userRole = user?.publicMetadata?.role as string | undefined;
+  const userRole = (user?.publicMetadata?.role as string | undefined) || dbRole;
 
   const navItems = [
     { name: 'Hub', href: '/hub', icon: Home },
@@ -68,7 +70,7 @@ export default function ProtectedLayoutClient({
   ];
 
   if (userRole === 'ADMIN') {
-    navItems.push({ name: 'Admin Console', href: '/applications', icon: ShieldAlert });
+    navItems.push({ name: 'Admin Console', href: '/admin', icon: ShieldAlert });
   } else if (userRole === 'ORGANIZER') {
     navItems.push({ name: 'Organizer Dashboard', href: '/organizer', icon: Building2 });
   } else {
@@ -118,7 +120,7 @@ export default function ProtectedLayoutClient({
 
         <div className="p-4 border-t border-white/5">
           <div className="flex items-center gap-3 bg-[#111] p-3 rounded-xl border border-white/5">
-            <UserButton afterSignOutUrl="/sign-in" />
+            <UserButton />
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-bold truncate">{user?.firstName || 'Builder'}</span>
               <div className="flex items-center gap-2 mt-0.5">

@@ -36,6 +36,7 @@ export default function OnboardingPage() {
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [usernameError, setUsernameError] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -84,6 +85,7 @@ export default function OnboardingPage() {
         }
 
         if (data) {
+          setProfileId(data.id);
           // Profile exists (created by webhook) - pre-fill form with existing data
           setFormData(prev => ({
             ...prev,
@@ -189,7 +191,8 @@ export default function OnboardingPage() {
       const token = await getToken({ template: 'supabase' });
       if (token) {
         const client = createClerkSupabaseClient(token);
-        const { error } = await client.from('profiles').update({
+        const profileData = {
+          email: user.primaryEmailAddress?.emailAddress,
           full_name: formData.fullName,
           username: formData.username,
           bio: formData.bio,
@@ -206,7 +209,21 @@ export default function OnboardingPage() {
           builder_level: 'Initiate',
           streak_days: 1,
           updated_at: new Date().toISOString(),
-        }).eq('clerk_user_id', user.id);
+        };
+
+        let error;
+        if (profileId) {
+          const res = await client.from('profiles').update(profileData).eq('clerk_user_id', user.id);
+          error = res.error;
+        } else {
+          const res = await client.from('profiles').insert({
+            id: crypto.randomUUID(),
+            clerk_user_id: user.id,
+            ...profileData,
+            created_at: new Date().toISOString(),
+          });
+          error = res.error;
+        }
         
         if (error) {
           console.error("Supabase error:", JSON.stringify(error, null, 2));
@@ -452,7 +469,7 @@ export default function OnboardingPage() {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-mono text-[#C6FF00] mb-2 flex items-center gap-2">
-                    <GitBranch className="w-4 h-4" /> GitHub Profile URL <span className="text-gray-500">(required)</span>
+                    <GitBranch className="w-4 h-4" /> GitHub Profile URL
                   </label>
                   <input type="text" value={formData.githubUrl} onChange={(e) => updateForm('githubUrl', e.target.value)}
                     className="w-full bg-[#111] border border-[#C6FF00]/30 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-[#C6FF00] transition-colors placeholder:text-gray-600"
@@ -497,7 +514,7 @@ export default function OnboardingPage() {
                 Next <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
-              <button onClick={handleSubmit} disabled={isSubmitting || !formData.githubUrl}
+              <button onClick={handleSubmit} disabled={isSubmitting}
                 className="flex items-center gap-2 px-8 py-3 rounded-xl bg-[#C6FF00] text-black font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 {isSubmitting ? (
                   <><div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> Initializing...</>

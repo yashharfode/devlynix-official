@@ -46,17 +46,11 @@ export default function SignUpPage() {
             <SignUp
               forceRedirectUrl="/onboarding"
               appearance={{
-                layout: {
-                  logoPlacement: "none",
-                  showOptionalFields: false,
-                },
+
                 variables: {
                   colorPrimary: "#C6FF00",
                   colorBackground: "#ebebeb",
-                  colorInputBackground: "#FFFFFF",
-                  colorInputText: "#fcfcfc",
-                  colorText: "#FFFFFF",
-                  colorTextSecondary: "#f3f4f6",
+
                   colorDanger: "#ef4444",
                   colorSuccess: "#C6FF00",
                   borderRadius: "0.75rem",

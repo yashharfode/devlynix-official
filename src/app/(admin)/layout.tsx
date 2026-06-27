@@ -2,13 +2,17 @@
 
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { UserButton, useUser } from '@clerk/nextjs';
+import { UserButton, useUser, useAuth } from '@clerk/nextjs';
+import { createClerkSupabaseClient } from '@/lib/supabase';
+import { useEffect } from 'react';
 import { 
   ShieldAlert, 
   LayoutDashboard, 
   Users, 
   Terminal, 
   FileText,
+  Briefcase,
+  Star,
   Menu,
   X,
   LogOut
@@ -25,9 +29,38 @@ export default function AdminLayout({
   const { user, isLoaded } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Note: Actual secure role verification is handled in Server Components/Actions.
-  // This is just client-side rendering logic.
-  if (isLoaded && user?.publicMetadata?.role !== 'ADMIN') {
+  const { getToken } = useAuth();
+  const [dbRole, setDbRole] = useState<string | null>(null);
+  const [isDbLoaded, setIsDbLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      if (isLoaded) setIsDbLoaded(true);
+      return;
+    }
+    const fetchRole = async () => {
+      try {
+        const token = await getToken({ template: 'supabase' });
+        if (!token) return;
+        const client = createClerkSupabaseClient(token);
+        const { data } = await client
+          .from('profiles')
+          .select('role')
+          .eq('clerk_user_id', user.id)
+          .maybeSingle();
+        if (data?.role) setDbRole(data.role);
+      } catch (err) {
+        console.error('Failed to fetch role:', err);
+      } finally {
+        setIsDbLoaded(true);
+      }
+    };
+    fetchRole();
+  }, [user, isLoaded, getToken]);
+
+  const userRole = (user?.publicMetadata?.role as string | undefined) || dbRole;
+
+  if (isLoaded && isDbLoaded && userRole !== 'ADMIN') {
     router.push('/hub');
     return null;
   }
@@ -36,6 +69,8 @@ export default function AdminLayout({
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Hackathons', href: '/admin/hackathons', icon: Terminal },
+    { name: 'Projects', href: '/admin/projects', icon: Briefcase },
+    { name: 'Hall of Fame', href: '/admin/hall-of-fame', icon: Star },
     { name: 'Applications', href: '/applications', icon: FileText },
   ];
 
