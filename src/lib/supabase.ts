@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrlRaw = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrl = (supabaseUrlRaw?.startsWith('http') ? supabaseUrlRaw : null) || 'https://placeholder.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const isConfigured = () =>
