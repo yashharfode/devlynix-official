@@ -60,14 +60,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Pre-fill from Clerk
-    setFormData(prev => ({
-      ...prev,
-      fullName: user?.fullName ?? "",
-      username: user?.username ?? "",
-    }));
-
-    const checkProfile = async () => {
+    const loadProfile = async () => {
       try {
         const token = await getToken({ template: 'supabase' });
         if (!token) {
@@ -81,7 +74,7 @@ export default function OnboardingPage() {
         const client = createClerkSupabaseClient(token);
         const { data, error } = await client
           .from('profiles')
-          .select('id')
+          .select('*')
           .eq('clerk_user_id', user!.id)
           .maybeSingle();
 
@@ -91,20 +84,41 @@ export default function OnboardingPage() {
         }
 
         if (data) {
-          router.push('/hub');
-          return;
+          // Profile exists (created by webhook) - pre-fill form with existing data
+          setFormData(prev => ({
+            ...prev,
+            fullName: data.full_name ?? user?.fullName ?? "",
+            username: data.username ?? user?.username ?? "",
+            bio: data.bio ?? "",
+            college: data.college ?? "",
+            yearOfStudy: data.year_of_study ?? "",
+            primaryRole: data.primary_role ?? "",
+            experience: data.experience ?? "",
+            skills: data.skills ?? [],
+            interests: data.interests ?? [],
+            githubUrl: data.github_url ?? "",
+            linkedinUrl: data.linkedin_url ?? "",
+            portfolioUrl: data.portfolio_url ?? "",
+          }));
+          setIsChecking(false);
+        } else {
+          // No profile yet - webhook may not have run yet, pre-fill from Clerk only
+          setFormData(prev => ({
+            ...prev,
+            fullName: user?.fullName ?? "",
+            username: user?.username ?? "",
+          }));
+          setIsChecking(false);
         }
 
-        setIsChecking(false);
-
       } catch (err) {
-        console.error('Failed to check profile in Supabase:', err);
+        console.error('Failed to load profile from Supabase:', err);
         setSupabaseReady(false);
         setIsChecking(false);
       }
     };
 
-    checkProfile();
+    loadProfile();
   }, [isLoaded, isSignedIn, user, router, getToken]);
 
   // Debounced Username Check
@@ -175,10 +189,7 @@ export default function OnboardingPage() {
       const token = await getToken({ template: 'supabase' });
       if (token) {
         const client = createClerkSupabaseClient(token);
-        const { error } = await client.from('profiles').upsert({
-          id: user.id,
-          clerk_user_id: user.id,
-          email: user.primaryEmailAddress?.emailAddress ?? null,
+        const { error } = await client.from('profiles').update({
           full_name: formData.fullName,
           username: formData.username,
           bio: formData.bio,
@@ -191,11 +202,12 @@ export default function OnboardingPage() {
           github_url: formData.githubUrl,
           linkedin_url: formData.linkedinUrl,
           portfolio_url: formData.portfolioUrl,
-          xp: 0,
+          xp: 100,
           builder_level: 'Initiate',
-          streak_days: 0,
+          streak_days: 1,
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'clerk_user_id' });
+        }).eq('clerk_user_id', user.id);
+        
         if (error) {
           console.error("Supabase error:", JSON.stringify(error, null, 2));
           if (error.code === '23505' && error.message.includes('profiles_username_key')) {
