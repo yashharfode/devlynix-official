@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Trophy, Medal, Star, Zap, Users } from "lucide-react";
 
 export default async function CommunityLeaderboardPage() {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) redirect("/sign-in");
 
   // Fetch top 50 users ranked by XP
@@ -21,7 +23,7 @@ export default async function CommunityLeaderboardPage() {
       builder_level: true,
       xp: true,
       streak_days: true,
-      clerk_user_id: true,
+      auth_id: true,
     }
   });
 
@@ -83,7 +85,7 @@ export default async function CommunityLeaderboardPage() {
 
         <div className="divide-y divide-[#111]">
           {topUsers.map((user, index) => {
-            const isCurrentUser = user.clerk_user_id === userId;
+            const isCurrentUser = user.auth_id === userId;
             
             return (
               <div 

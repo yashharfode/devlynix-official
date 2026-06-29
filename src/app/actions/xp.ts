@@ -15,12 +15,12 @@ export async function awardXP(amount: number, reason: string) {
       where: { auth_id: userId }
     });
 
-    if (!user) return { error: "User not found" };
+    if (!dbUser) return { error: "User not found" };
 
-    const newXP = user.xp + amount;
+    const newXP = dbUser.xp + amount;
     
     // Calculate new level (simple logic for now)
-    let newLevel = user.builder_level;
+    let newLevel = dbUser.builder_level;
     if (newXP >= 5000) newLevel = "Elite Builder";
     else if (newXP >= 2000) newLevel = "Senior Builder";
     else if (newXP >= 500) newLevel = "Pro Builder";
