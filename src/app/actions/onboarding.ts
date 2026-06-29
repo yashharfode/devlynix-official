@@ -26,52 +26,59 @@ export async function checkUsername(username: string) {
 }
 
 export async function saveProfile(data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
-
-  if (data.username) {
-    const existing = await prisma.user.findUnique({ where: { username: data.username } });
-    if (existing && existing.clerk_user_id !== userId) {
-      return { success: false, error: "Username is already taken" };
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, error: "Unauthorized" };
     }
+
+    if (data.username) {
+      const existing = await prisma.user.findUnique({ where: { username: data.username } });
+      if (existing && existing.clerk_user_id !== userId) {
+        return { success: false, error: "Username is already taken" };
+      }
+    }
+
+    await prisma.user.upsert({
+      where: { clerk_user_id: userId },
+      update: {
+        full_name: data.fullName,
+        username: data.username,
+        bio: data.bio,
+        college: data.college,
+        year_of_study: data.yearOfStudy,
+        primary_role: data.primaryRole,
+        experience: data.experience,
+        skills: data.skills || [],
+        interests: data.interests || [],
+        github_url: data.githubUrl,
+        linkedin_url: data.linkedinUrl,
+        portfolio_url: data.portfolioUrl,
+      },
+      create: {
+        clerk_user_id: userId,
+        email: data.email || null,
+        full_name: data.fullName,
+        username: data.username,
+        bio: data.bio,
+        college: data.college,
+        year_of_study: data.yearOfStudy,
+        primary_role: data.primaryRole,
+        experience: data.experience,
+        skills: data.skills || [],
+        interests: data.interests || [],
+        github_url: data.githubUrl,
+        linkedin_url: data.linkedinUrl,
+        portfolio_url: data.portfolioUrl,
+        xp: 100,
+        builder_level: "Initiate",
+        streak_days: 1,
+      }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error in saveProfile action:", error);
+    return { success: false, error: error?.message || "Internal server error while saving profile" };
   }
-
-  await prisma.user.upsert({
-    where: { clerk_user_id: userId },
-    update: {
-      full_name: data.fullName,
-      username: data.username,
-      bio: data.bio,
-      college: data.college,
-      year_of_study: data.yearOfStudy,
-      primary_role: data.primaryRole,
-      experience: data.experience,
-      skills: data.skills,
-      interests: data.interests,
-      github_url: data.githubUrl,
-      linkedin_url: data.linkedinUrl,
-      portfolio_url: data.portfolioUrl,
-    },
-    create: {
-      clerk_user_id: userId,
-      email: data.email || null,
-      full_name: data.fullName,
-      username: data.username,
-      bio: data.bio,
-      college: data.college,
-      year_of_study: data.yearOfStudy,
-      primary_role: data.primaryRole,
-      experience: data.experience,
-      skills: data.skills,
-      interests: data.interests,
-      github_url: data.githubUrl,
-      linkedin_url: data.linkedinUrl,
-      portfolio_url: data.portfolioUrl,
-      xp: 100,
-      builder_level: "Initiate",
-      streak_days: 1,
-    }
-  });
-
-  return { success: true };
 }
