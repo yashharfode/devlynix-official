@@ -16,6 +16,74 @@ export default function SignUpPage() {
         }}
       />
 
+      {/* Clerk overrides */}
+      <style>{`
+        .cl-rootBox { width: 100%; }
+        .cl-card {
+          background: #111111 !important;
+          border: 1px solid rgba(255,255,255,0.12) !important;
+          border-radius: 20px !important;
+          box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 32px 64px rgba(0,0,0,0.6) !important;
+        }
+        .cl-headerTitle { color: #ffffff !important; }
+        .cl-headerSubtitle { color: #9ca3af !important; }
+        .cl-socialButtonsBlockButton {
+          background: #1a1a1a !important;
+          border: 1px solid rgba(255,255,255,0.1) !important;
+          color: #ffffff !important;
+          border-radius: 10px !important;
+        }
+        .cl-socialButtonsBlockButton:hover {
+          background: #222 !important;
+          border-color: rgba(255,255,255,0.2) !important;
+        }
+        .cl-socialButtonsBlockButtonText { color: #ffffff !important; }
+        .cl-dividerLine { background: rgba(255,255,255,0.08) !important; }
+        .cl-dividerText { color: #4b5563 !important; }
+        .cl-formFieldLabel { color: #9ca3af !important; font-size: 0.8rem !important; }
+        .cl-formFieldInput {
+          background: #1a1a1a !important;
+          border: 1px solid rgba(255,255,255,0.1) !important;
+          border-radius: 10px !important;
+          color: #ffffff !important;
+          caret-color: #C6FF00 !important;
+        }
+        .cl-formFieldInput:focus {
+          border-color: #C6FF00 !important;
+          box-shadow: 0 0 0 2px rgba(198,255,0,0.12) !important;
+          outline: none !important;
+        }
+        .cl-formButtonPrimary {
+          background: #C6FF00 !important;
+          color: #000000 !important;
+          font-weight: 700 !important;
+          border-radius: 10px !important;
+          border: none !important;
+        }
+        .cl-formButtonPrimary:hover { background: #d4ff33 !important; }
+        .cl-footerActionLink { color: #C6FF00 !important; }
+        .cl-footerActionLink:hover { color: #d4ff33 !important; }
+        .cl-footerActionText { color: #6b7280 !important; }
+        .cl-identityPreviewText { color: #ffffff !important; }
+        .cl-identityPreviewEditButton { color: #C6FF00 !important; }
+        .cl-formFieldSuccessText { color: #C6FF00 !important; }
+        .cl-formFieldErrorText { color: #f87171 !important; }
+        .cl-alertText { color: #f87171 !important; }
+        .cl-otpCodeFieldInput {
+          background: #1a1a1a !important;
+          border: 1px solid rgba(255,255,255,0.1) !important;
+          color: #ffffff !important;
+          border-radius: 10px !important;
+        }
+        .cl-otpCodeFieldInput:focus { border-color: #C6FF00 !important; }
+        .cl-logoBox { display: none !important; }
+        .cl-footer { background: transparent !important; }
+        .cl-main { background: transparent !important; }
+        .cl-header { background: transparent !important; }
+        .cl-userPreviewSecondaryIdentifier { color: #9ca3af !important; }
+        .cl-formFieldInfoText { color: #9ca3af !important; }
+      `}</style>
+
       {/* Glow blob */}
       <div className="pointer-events-none absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#C6FF00]/10 blur-[140px]" />
 
@@ -42,39 +110,17 @@ export default function SignUpPage() {
         </div>
 
         <div className="w-full max-w-md">
-            {/* Clerk SignUp — fully themed */}
+            {/* Clerk SignUp */}
             <SignUp
               forceRedirectUrl="/onboarding"
               appearance={{
-
                 variables: {
                   colorPrimary: "#C6FF00",
-                  colorBackground: "#ebebeb",
-
+                  colorBackground: "#111111",
                   colorDanger: "#ef4444",
-                  colorSuccess: "#C6FF00",
-                  borderRadius: "0.75rem",
-                  fontFamily: "var(--font-geist-sans), Arial, sans-serif",
-                  fontFamilyButtons: "var(--font-geist-sans), Arial, sans-serif",
-                  fontSize: "0.9rem",
-                },
-                elements: {
-                  rootBox: "w-full",
-                  card: "bg-[#111111] border border-white/10 rounded-2xl shadow-2xl p-6",
-                  cardBox: "w-full",
-                  headerTitle: "text-white",
-                  headerSubtitle: "text-gray-100",
-                  socialButtonsBlockButton:
-                    "bg-[#1a1a1a] border border-white/10 text-white hover:bg-white/5",
-                  dividerLine: "bg-white/15",
-                  dividerText: "text-gray-100",
-                  formFieldLabel: "text-gray-100",
-                  formFieldInput:
-                    "bg-white text-black rounded-lg px-4 py-3 focus:border-[#C6FF00] focus:ring-2 focus:ring-[#C6FF00]/50",
-                  formButtonPrimary:
-                    "bg-[#C6FF00] text-black font-bold rounded-lg hover:bg-[#d4ff33] shadow-[0_0_20px_rgba(198,255,0,0.3)] py-3",
-                  footerActionLink: "text-[#C6FF00] hover:text-[#d4ff33] font-medium",
-                  footerActionText: "text-gray-100",
+                  borderRadius: "0.625rem",
+                  colorText: "white",
+                  colorInputText: "white",
                 },
               }}
             />
