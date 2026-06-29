@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useAuth } from '@clerk/nextjs';
-import { createClerkSupabaseClient } from '@/lib/supabase';
+import { useUser } from '@clerk/nextjs';
+import { getProfile, checkUsername, saveProfile } from '@/app/actions/onboarding';
 import {
   ChevronRight, ChevronLeft, GitBranch, User, Code, Blocks,
   Link as LinkIcon, CheckCircle2, Zap
@@ -26,13 +26,10 @@ const ROLES_LIST = [
 export default function OnboardingPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
-  const { getToken } = useAuth();
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-  const [supabaseReady, setSupabaseReady] = useState(false);
-  
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [usernameError, setUsernameError] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState(false);
@@ -63,30 +60,11 @@ export default function OnboardingPage() {
 
     const loadProfile = async () => {
       try {
-        const token = await getToken({ template: 'supabase' });
-        if (!token) {
-          // JWT template not configured — show onboarding, save will be skipped
-          setSupabaseReady(false);
-          setIsChecking(false);
-          return;
-        }
-
-        setSupabaseReady(true);
-        const client = createClerkSupabaseClient(token);
-        const { data, error } = await client
-          .from('profiles')
-          .select('*')
-          .eq('clerk_user_id', user!.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Supabase error:", JSON.stringify(error, null, 2));
-          throw error;
-        }
+        const data = await getProfile();
 
         if (data) {
           setProfileId(data.id);
-          // Profile exists (created by webhook) - pre-fill form with existing data
+          // Profile exists - pre-fill form with existing data
           setFormData(prev => ({
             ...prev,
             fullName: data.full_name ?? user?.fullName ?? "",
@@ -104,7 +82,7 @@ export default function OnboardingPage() {
           }));
           setIsChecking(false);
         } else {
-          // No profile yet - webhook may not have run yet, pre-fill from Clerk only
+          // No profile yet - pre-fill from Clerk only
           setFormData(prev => ({
             ...prev,
             fullName: user?.fullName ?? "",
@@ -114,14 +92,13 @@ export default function OnboardingPage() {
         }
 
       } catch (err) {
-        console.error('Failed to load profile from Supabase:', err);
-        setSupabaseReady(false);
+        console.error('Failed to load profile:', err);
         setIsChecking(false);
       }
     };
 
     loadProfile();
-  }, [isLoaded, isSignedIn, user, router, getToken]);
+  }, [isLoaded, isSignedIn, user, router]);
 
   // Debounced Username Check
   useEffect(() => {
@@ -138,20 +115,9 @@ export default function OnboardingPage() {
 
     const timeoutId = setTimeout(async () => {
       try {
-        const token = await getToken({ template: 'supabase' });
-        if (!token) return;
+        const { available } = await checkUsername(formData.username);
 
-        const client = createClerkSupabaseClient(token);
-        const { data, error } = await client
-          .from('profiles')
-          .select('clerk_user_id')
-          .eq('username', formData.username)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Supabase username check error:", error);
-          setUsernameError("Error checking username");
-        } else if (data && data.clerk_user_id !== user?.id) {
+        if (!available) {
           setUsernameError("Username already taken ❌");
         } else {
           setUsernameAvailable(true);
@@ -164,7 +130,7 @@ export default function OnboardingPage() {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [formData.username, getToken, user?.id]);
+  }, [formData.username, user?.id]);
 
   const handleNext = () => setStep(prev => Math.min(prev + 1, 4));
   const handlePrev = () => setStep(prev => Math.max(prev - 1, 1));
@@ -188,55 +154,29 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
 
     try {
-      const token = await getToken({ template: 'supabase' });
-      if (token) {
-        const client = createClerkSupabaseClient(token);
-        const profileData = {
-          email: user.primaryEmailAddress?.emailAddress,
-          full_name: formData.fullName,
-          username: formData.username,
-          bio: formData.bio,
-          college: formData.college,
-          year_of_study: formData.yearOfStudy,
-          primary_role: formData.primaryRole,
-          experience: formData.experience,
-          skills: formData.skills,
-          interests: formData.interests,
-          github_url: formData.githubUrl,
-          linkedin_url: formData.linkedinUrl,
-          portfolio_url: formData.portfolioUrl,
-          xp: 100,
-          builder_level: 'Initiate',
-          streak_days: 1,
-          updated_at: new Date().toISOString(),
-        };
+      const result = await saveProfile({
+        email: user.primaryEmailAddress?.emailAddress,
+        fullName: formData.fullName,
+        username: formData.username,
+        bio: formData.bio,
+        college: formData.college,
+        yearOfStudy: formData.yearOfStudy,
+        primaryRole: formData.primaryRole,
+        experience: formData.experience,
+        skills: formData.skills,
+        interests: formData.interests,
+        githubUrl: formData.githubUrl,
+        linkedinUrl: formData.linkedinUrl,
+        portfolioUrl: formData.portfolioUrl,
+      });
 
-        let error;
-        if (profileId) {
-          const res = await client.from('profiles').update(profileData).eq('clerk_user_id', user.id);
-          error = res.error;
-        } else {
-          const res = await client.from('profiles').insert({
-            id: crypto.randomUUID(),
-            clerk_user_id: user.id,
-            ...profileData,
-            created_at: new Date().toISOString(),
-          });
-          error = res.error;
-        }
-        
-        if (error) {
-          console.error("Supabase error:", JSON.stringify(error, null, 2));
-          if (error.code === '23505' && error.message.includes('profiles_username_key')) {
-            alert("This username is already taken by someone else! Please go back to Step 1 and choose a different username.");
-            setIsSubmitting(false);
-            return;
-          }
-          throw error;
-        }
+      if (!result.success) {
+        alert(result.error || "Failed to save profile. Please try again.");
+        setIsSubmitting(false);
+        return;
       }
     } catch (err: any) {
-      console.error('Failed to save profile to Supabase:', err);
+      console.error('Failed to save profile:', err);
       alert("Failed to save profile. Please try again.");
       setIsSubmitting(false);
       return;
@@ -296,11 +236,6 @@ export default function OnboardingPage() {
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Initialize Profile</h1>
           <p className="text-gray-500 font-mono text-sm">Configure your builder identity to access the network.</p>
-          {!supabaseReady && (
-            <p className="mt-3 text-xs text-yellow-500/80 font-mono bg-yellow-500/5 border border-yellow-500/20 rounded-lg px-3 py-2 inline-block">
-              ⚠ Supabase not configured — profile won't be persisted yet
-            </p>
-          )}
         </div>
 
         {renderStepIndicators()}
