@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function HallOfFamePage() {
   // Fetch top 50 users ranked by XP
   const topUsers = await prisma.user.findMany({
+    where: { is_hidden_from_leaderboard: false },
     take: 50,
     orderBy: [
       { xp: "desc" },
@@ -17,7 +18,7 @@ export default async function HallOfFamePage() {
       builder_level: true,
       xp: true,
       streak_days: true,
-      clerk_user_id: true,
+      auth_id: true,
     }
   });
 
@@ -28,7 +29,9 @@ export default async function HallOfFamePage() {
   });
 
   // Fetch manual featured members
-  const featuredMembers = await prisma.featuredMember.findMany();
+  const featuredMembers = await prisma.featuredMember.findMany({
+    where: { is_hidden: false }
+  });
 
   // Unify them into a single array
   const allFeatures = [

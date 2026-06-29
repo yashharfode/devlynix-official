@@ -2,10 +2,12 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function addFeaturedMember(formData: FormData) {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) throw new Error("Unauthorized");
 
   const name = formData.get("name") as string;
@@ -50,7 +52,9 @@ export async function addFeaturedMember(formData: FormData) {
 }
 
 export async function editFeaturedMember(id: string, formData: FormData) {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) throw new Error("Unauthorized");
 
   const name = formData.get("name") as string;
@@ -96,7 +100,9 @@ export async function editFeaturedMember(id: string, formData: FormData) {
 }
 
 export async function deleteFeaturedMember(id: string) {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) throw new Error("Unauthorized");
 
   await prisma.featuredMember.delete({
@@ -107,8 +113,25 @@ export async function deleteFeaturedMember(id: string) {
   revalidatePath('/hall-of-fame');
 }
 
+export async function toggleFeaturedMemberVisibility(id: string, currentHidden: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
+  if (!userId) throw new Error("Unauthorized");
+
+  await prisma.featuredMember.update({
+    where: { id },
+    data: { is_hidden: !currentHidden }
+  });
+
+  revalidatePath('/admin/hall-of-fame');
+  revalidatePath('/hall-of-fame');
+}
+
 export async function updateProjectSubmissionDisplay(projectId: string, thumbnailUrl: string, category: string) {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) throw new Error("Unauthorized");
 
   await prisma.projectSubmission.update({

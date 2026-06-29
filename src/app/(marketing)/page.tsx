@@ -7,11 +7,17 @@ import { PricingSection } from '@/components/sections/PricingSection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { useIntersectionObserver } from '@/lib/hooks/useIntersectionObserver';
 import { Zap, ArrowRight } from 'lucide-react';
-import { Show } from '@clerk/nextjs';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 export default function MarketingPage() {
   useIntersectionObserver();
+  const [user, setUser] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user));
+  }, []);
 
   return (
     <>
@@ -58,16 +64,15 @@ export default function MarketingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-            <Show when="signed-out">
-              <button className="flex w-full sm:w-auto items-center justify-center gap-3 rounded-xl bg-white px-8 sm:px-10 py-4 sm:py-5 text-lg sm:text-xl font-bold text-black transition-all hover:bg-[#C6FF00] hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(198,255,0,0.6)]">
+            {!user ? (
+              <Link href="/sign-up" className="flex w-full sm:w-auto items-center justify-center gap-3 rounded-xl bg-white px-8 sm:px-10 py-4 sm:py-5 text-lg sm:text-xl font-bold text-black transition-all hover:bg-[#C6FF00] hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(198,255,0,0.6)]">
                 <Zap className="w-6 h-6 fill-black" /> Initialize Now
-              </button>
-            </Show>
-            <Show when="signed-in">
+              </Link>
+            ) : (
               <Link href="/hub" className="flex w-full sm:w-auto items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#C6FF00] to-green-400 px-8 sm:px-10 py-4 sm:py-5 text-lg sm:text-xl font-bold text-black transition-all hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(198,255,0,0.6)]">
                 <Zap className="w-6 h-6 fill-black" /> Go to Dashboard
               </Link>
-            </Show>
+            )}
           </div>
         </div>
       </section>

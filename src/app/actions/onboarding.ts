@@ -1,25 +1,29 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function getProfile() {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) return null;
   
   return await prisma.user.findUnique({ 
-    where: { clerk_user_id: userId } 
+    where: { auth_id: userId } 
   });
 }
 
 export async function checkUsername(username: string) {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   
   const existing = await prisma.user.findUnique({ 
     where: { username } 
   });
   
-  if (existing && existing.clerk_user_id !== userId) {
+  if (existing && existing.auth_id !== userId) {
     return { available: false };
   }
   return { available: true };
@@ -27,20 +31,22 @@ export async function checkUsername(username: string) {
 
 export async function saveProfile(data: any) {
   try {
-    const { userId } = await auth();
+    const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
     if (!userId) {
       return { success: false, error: "Unauthorized" };
     }
 
     if (data.username) {
       const existing = await prisma.user.findUnique({ where: { username: data.username } });
-      if (existing && existing.clerk_user_id !== userId) {
+      if (existing && existing.auth_id !== userId) {
         return { success: false, error: "Username is already taken" };
       }
     }
 
     await prisma.user.upsert({
-      where: { clerk_user_id: userId },
+      where: { auth_id: userId },
       update: {
         full_name: data.fullName,
         username: data.username,
@@ -56,7 +62,7 @@ export async function saveProfile(data: any) {
         portfolio_url: data.portfolioUrl,
       },
       create: {
-        clerk_user_id: userId,
+        auth_id: userId,
         email: data.email || null,
         full_name: data.fullName,
         username: data.username,

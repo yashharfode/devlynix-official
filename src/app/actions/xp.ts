@@ -1,16 +1,18 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function awardXP(amount: number, reason: string) {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) return { error: "Unauthorized" };
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { clerk_user_id: userId }
+    const dbUser = await prisma.user.findUnique({
+      where: { auth_id: userId }
     });
 
     if (!user) return { error: "User not found" };
@@ -25,7 +27,7 @@ export async function awardXP(amount: number, reason: string) {
     else newLevel = "Initiate";
 
     await prisma.user.update({
-      where: { clerk_user_id: userId },
+      where: { auth_id: userId },
       data: { 
         xp: newXP,
         builder_level: newLevel

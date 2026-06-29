@@ -1,18 +1,18 @@
-import { auth } from '@clerk/nextjs/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ProtectedLayoutClient from './ProtectedLayoutClient';
 
-async function checkOnboardingComplete(clerkUserId: string) {
+async function checkOnboardingComplete(authId: string) {
   try {
     const profile = await prisma.user.findUnique({
-      where: { clerk_user_id: clerkUserId },
-      select: { id: true }
+      where: { auth_id: authId },
+      select: { id: true, role: true, xp: true, streak_days: true, full_name: true }
     });
-    return !!profile;
+    return profile;
   } catch (error) {
     console.error('Prisma error checking onboarding:', error);
-    return false;
+    return null;
   }
 }
 
@@ -21,17 +21,18 @@ export default async function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId, isAuthenticated } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!isAuthenticated || !userId) {
+  if (!user) {
     redirect('/sign-in');
   }
 
-  const hasCompletedOnboarding = await checkOnboardingComplete(userId);
+  const profile = await checkOnboardingComplete(user.id);
 
-  if (!hasCompletedOnboarding) {
+  if (!profile) {
     redirect('/onboarding');
   }
 
-  return <ProtectedLayoutClient>{children}</ProtectedLayoutClient>;
+  return <ProtectedLayoutClient profile={profile} user={user}>{children}</ProtectedLayoutClient>;
 }

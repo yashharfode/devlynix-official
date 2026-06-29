@@ -1,22 +1,24 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 // Verify admin role helper
 async function verifyAdmin() {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const userId = authUser?.id;
   if (!userId) return false;
   
   const user = await prisma.user.findUnique({
-    where: { clerk_user_id: userId }
+    where: { auth_id: userId }
   });
   
   return user?.role === "ADMIN";
 }
 
-export async function approveOrganizer(applicationId: string, applicantUserId: string, clerkUserId: string) {
+export async function approveOrganizer(applicationId: string, applicantUserId: string, authId: string) {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
     return { error: "Unauthorized. Admin access required." };
@@ -33,14 +35,6 @@ export async function approveOrganizer(applicationId: string, applicantUserId: s
     await prisma.user.update({
       where: { id: applicantUserId },
       data: { role: "ORGANIZER" }
-    });
-
-    // 3. Update Clerk publicMetadata to sync sessionClaims
-    const client = await clerkClient();
-    await client.users.updateUserMetadata(clerkUserId, {
-      publicMetadata: {
-        role: "ORGANIZER"
-      }
     });
 
     revalidatePath("/applications");

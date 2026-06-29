@@ -1,16 +1,18 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Terminal, Star, CheckCircle, XCircle } from "lucide-react";
 import { revalidatePath } from "next/cache";
-
+import { StatusSelect } from "./StatusSelect";
 // Server Actions
 async function toggleFeatured(formData: FormData) {
   "use server";
-  const { userId: adminId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const adminId = user?.id;
   if (!adminId) throw new Error("Unauthorized");
   
-  const admin = await prisma.user.findUnique({ where: { clerk_user_id: adminId } });
+  const admin = await prisma.user.findUnique({ where: { auth_id: adminId } });
   if (admin?.role !== "ADMIN") throw new Error("Forbidden");
 
   const hackathonId = formData.get("hackathonId") as string;
@@ -26,10 +28,12 @@ async function toggleFeatured(formData: FormData) {
 
 async function updateStatus(formData: FormData) {
   "use server";
-  const { userId: adminId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const adminId = user?.id;
   if (!adminId) throw new Error("Unauthorized");
   
-  const admin = await prisma.user.findUnique({ where: { clerk_user_id: adminId } });
+  const admin = await prisma.user.findUnique({ where: { auth_id: adminId } });
   if (admin?.role !== "ADMIN") throw new Error("Forbidden");
 
   const hackathonId = formData.get("hackathonId") as string;
@@ -44,10 +48,12 @@ async function updateStatus(formData: FormData) {
 }
 
 export default async function AdminHackathonsPage() {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) redirect("/sign-in");
 
-  const currentUser = await prisma.user.findUnique({ where: { clerk_user_id: userId } });
+  const currentUser = await prisma.user.findUnique({ where: { auth_id: userId } });
   if (currentUser?.role !== "ADMIN") redirect("/hub");
 
   const hackathons = await prisma.hackathon.findMany({
@@ -105,19 +111,11 @@ export default async function AdminHackathonsPage() {
                     </form>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <form action={updateStatus} className="inline-block">
-                      <input type="hidden" name="hackathonId" value={h.id} />
-                      <select 
-                        name="status" 
-                        defaultValue={h.approval_status || ""}
-                        className="bg-[#111] border border-white/5 text-xs rounded-md px-2 py-1 text-gray-300 focus:outline-none focus:border-emerald-500"
-                        onChange={(e) => e.target.form?.requestSubmit()}
-                      >
-                        <option value="PENDING">PENDING</option>
-                        <option value="APPROVED">APPROVED</option>
-                        <option value="REJECTED">REJECTED</option>
-                      </select>
-                    </form>
+                    <StatusSelect 
+                      hackathonId={h.id} 
+                      currentStatus={h.approval_status || ""} 
+                      action={updateStatus} 
+                    />
                   </td>
                 </tr>
               ))}

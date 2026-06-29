@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { UserButton, useUser, useAuth } from '@clerk/nextjs';
-import { createClerkSupabaseClient } from '@/lib/supabase';
-import { useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { 
   ShieldAlert, 
   LayoutDashboard, 
@@ -15,7 +13,8 @@ import {
   Star,
   Menu,
   X,
-  LogOut
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,41 +25,40 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isLoaded } = useUser();
+  const supabase = createClient();
+  
+  const [user, setUser] = useState<any>(null);
+  const [dbRole, setDbRole] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { getToken } = useAuth();
-  const [dbRole, setDbRole] = useState<string | null>(null);
-  const [isDbLoaded, setIsDbLoaded] = useState(false);
-
   useEffect(() => {
-    if (!user) {
-      if (isLoaded) setIsDbLoaded(true);
-      return;
-    }
-    const fetchRole = async () => {
+    const fetchUserAndRole = async () => {
       try {
-        const token = await getToken({ template: 'supabase' });
-        if (!token) return;
-        const client = createClerkSupabaseClient(token);
-        const { data } = await client
+        const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+        if (!supabaseUser) {
+          setIsLoaded(true);
+          return;
+        }
+        setUser(supabaseUser);
+
+        const { data } = await supabase
           .from('profiles')
           .select('role')
-          .eq('clerk_user_id', user.id)
+          .eq('auth_id', supabaseUser.id)
           .maybeSingle();
+
         if (data?.role) setDbRole(data.role);
       } catch (err) {
         console.error('Failed to fetch role:', err);
       } finally {
-        setIsDbLoaded(true);
+        setIsLoaded(true);
       }
     };
-    fetchRole();
-  }, [user, isLoaded, getToken]);
+    fetchUserAndRole();
+  }, [supabase]);
 
-  const userRole = (user?.publicMetadata?.role as string | undefined) || dbRole;
-
-  if (isLoaded && isDbLoaded && userRole !== 'ADMIN') {
+  if (isLoaded && dbRole !== 'ADMIN') {
     router.push('/hub');
     return null;
   }
@@ -73,6 +71,11 @@ export default function AdminLayout({
     { name: 'Hall of Fame', href: '/admin/hall-of-fame', icon: Star },
     { name: 'Applications', href: '/applications', icon: FileText },
   ];
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push('/sign-in');
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#030303] text-gray-300">
@@ -122,9 +125,11 @@ export default function AdminLayout({
             <span className="text-sm">Exit to Hub</span>
           </Link>
           <div className="flex items-center gap-3 bg-[#111] p-3 rounded-xl border border-white/5">
-            <UserButton />
+            <button onClick={handleSignOut} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#222] hover:bg-[#333] transition-colors">
+              <UserIcon className="w-4 h-4" />
+            </button>
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-medium text-white truncate">{user?.firstName || 'Admin'}</span>
+              <span className="text-sm font-medium text-white truncate">{user?.email || 'Admin'}</span>
               <span className="text-xs text-gray-500 font-mono">System Administrator</span>
             </div>
           </div>

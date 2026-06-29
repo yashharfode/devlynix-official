@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useAuth } from '@clerk/nextjs';
-import { createClerkSupabaseClient } from '@/lib/supabase';
+import { createClient } from "@/lib/supabase/client";
 import { extractUsernameFromUrl, fetchGithubProfile, fetchGithubRepos } from '@/lib/github';
 import {
   GitBranch, User, BookOpen, Star, GitFork, ShieldCheck,
@@ -17,92 +16,82 @@ export default function BuilderDashboard() {
   const [githubUser, setGithubUser] = useState<any>(null);
   const [githubRepos, setGithubRepos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isLoaded, isSignedIn, user } = useUser();
-  const { getToken } = useAuth();
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (error || !data?.user) {
+        router.push('/');
+        return;
+      }
+      setUser(data.user);
+    });
+  }, [router]);
 
-    if (!isSignedIn || !user) {
-      router.push('/');
-      return;
-    }
+  useEffect(() => {
+    if (!user) return;
 
     const loadProfile = async () => {
       try {
-        const token = await getToken({ template: 'supabase' });
-        if (token) {
-          const client = createClerkSupabaseClient(token);
-          const { data, error } = await client
-            .from('profiles')
-            .select('*')
-            .eq('clerk_user_id', user.id)
-            .maybeSingle();
+        const client = createClient();
+        const { data, error } = await client
+          .from('profiles')
+          .select('*')
+          .eq('auth_id', user.id)
+          .maybeSingle();
 
-          if (error) {
-            console.error("Supabase error:", JSON.stringify(error, null, 2));
-            throw error;
-          }
+        if (error) {
+          console.error("Supabase error:", JSON.stringify(error, null, 2));
+          throw error;
+        }
 
-          if (!data) {
-            // If we successfully queried but got no data, they need to onboard
-            router.push('/onboarding');
-            return;
-          }
+        if (!data) {
+          // If we successfully queried but got no data, they need to onboard
+          router.push('/onboarding');
+          return;
+        }
 
-          setProfile({
-            fullName: data.full_name,
-            username: data.username,
-            bio: data.bio,
-            college: data.college,
-            yearOfStudy: data.year_of_study,
-            primaryRole: data.primary_role,
-            experience: data.experience,
-            skills: data.skills ?? [],
-            interests: data.interests ?? [],
-            githubUrl: data.github_url,
-            linkedinUrl: data.linkedin_url,
-            portfolioUrl: data.portfolio_url,
-            xp: data.xp ?? 0,
-            builderLevel: data.builder_level ?? 'Initiate',
-            streakDays: data.streak_days ?? 0,
+        setProfile({
+          fullName: data.full_name,
+          username: data.username,
+          bio: data.bio,
+          college: data.college,
+          yearOfStudy: data.year_of_study,
+          primaryRole: data.primary_role,
+          experience: data.experience,
+          skills: data.skills ?? [],
+          interests: data.interests ?? [],
+          githubUrl: data.github_url,
+          linkedinUrl: data.linkedin_url,
+          portfolioUrl: data.portfolio_url,
+          xp: data.xp ?? 0,
+          builderLevel: data.builder_level ?? 'Initiate',
+          streakDays: data.streak_days ?? 0,
+        });
+
+        // Unblock the UI immediately
+        setIsLoading(false);
+
+        // Load GitHub data asynchronously in the background
+        const username = extractUsernameFromUrl(data.github_url ?? '');
+        if (username) {
+          Promise.all([
+            fetchGithubProfile(username),
+            fetchGithubRepos(username),
+          ]).then(([ghUser, repos]) => {
+            setGithubUser(ghUser);
+            setGithubRepos(repos ?? []);
+          }).catch(ghErr => {
+            console.error('Failed to load GitHub data:', ghErr);
           });
-
-          // Unblock the UI immediately
-          setIsLoading(false);
-
-          // Load GitHub data asynchronously in the background
-          const username = extractUsernameFromUrl(data.github_url ?? '');
-          if (username) {
-            Promise.all([
-              fetchGithubProfile(username),
-              fetchGithubRepos(username),
-            ]).then(([ghUser, repos]) => {
-              setGithubUser(ghUser);
-              setGithubRepos(repos ?? []);
-            }).catch(ghErr => {
-              console.error('Failed to load GitHub data:', ghErr);
-            });
-          }
-        } else {
-          // Supabase JWT not configured — don't redirect to onboarding, show an error state
-          console.error('Supabase JWT template not configured in Clerk.');
-          setProfile({
-            fullName: user.fullName || 'Builder',
-            username: user.username || '',
-            bio: 'Please configure your Clerk Supabase JWT template to load your profile.',
-            xp: 0,
-            builderLevel: 'Error',
-            streakDays: 0,
-          });
-          setIsLoading(false);
         }
       } catch (err) {
         console.error('Failed to load profile from Supabase:', err);
         // Don't redirect, just show the error state
         setProfile({
-          fullName: user.fullName || 'Builder',
-          username: user.username || '',
+          fullName: user?.user_metadata?.full_name || 'Builder',
+          username: user?.user_metadata?.user_name || '',
           bio: 'Row Level Security (RLS) is blocking the read, or the table does not exist.',
           xp: 0,
           builderLevel: 'Error',
@@ -113,7 +102,7 @@ export default function BuilderDashboard() {
     };
 
     loadProfile();
-  }, [isLoaded, isSignedIn, user, router, getToken]);
+  }, [user, router]);
 
   if (isLoading || !profile) {
     return (
@@ -134,7 +123,7 @@ export default function BuilderDashboard() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 sm:gap-6 bg-[#0A0A0A]/50 border border-white/10 p-5 sm:p-8 rounded-3xl backdrop-blur-xl animate-[slideIn_0.3s_ease-out]">
           <div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">Welcome back, {profile.fullName.split(' ')[0]}</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">Welcome back, {profile.fullName?.split(' ')[0]}</h1>
               <span className="bg-[#C6FF00]/10 text-[#C6FF00] px-3 py-1 rounded-full text-xs font-bold border border-[#C6FF00]/30 flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" /> Verified Builder
               </span>
@@ -169,7 +158,7 @@ export default function BuilderDashboard() {
               
               <div className="flex flex-col items-center text-center mb-6 relative z-10">
                 <img 
-                  src={githubUser?.avatar_url || "https://i.pravatar.cc/150"} 
+                  src={githubUser?.avatar_url || (user?.id ? `https://i.pravatar.cc/150?u=${user.id}` : "https://i.pravatar.cc/150")} 
                   alt="Avatar" 
                   className="w-24 h-24 rounded-full border-4 border-[#111] shadow-[0_0_20px_rgba(198,255,0,0.2)] mb-4 object-cover"
                 />

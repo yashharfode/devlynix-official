@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useScrollDirection } from '@/lib/hooks/useScrollDirection';
 import Link from 'next/link';
-import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { createClient } from "@/lib/supabase/client";
 
 export default function MarketingLayout({
   children,
@@ -13,6 +13,12 @@ export default function MarketingLayout({
 }) {
   const scrollDirection = useScrollDirection();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user));
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -41,24 +47,19 @@ export default function MarketingLayout({
 
           {/* Desktop: CTA / avatar */}
           <div className="hidden md:flex items-center gap-4">
-            <Show when="signed-out">
-              <SignInButton>
-                <button className="rounded-lg bg-[#C6FF00] px-5 py-2 text-sm font-bold text-black transition-all hover:scale-105 shadow-[0_0_15px_rgba(198,255,0,0.2)]">
-                  Enter Hub
-                </button>
-              </SignInButton>
-            </Show>
-            <Show when="signed-in">
+            {!user ? (
+              <Link href="/sign-in" className="rounded-lg bg-[#C6FF00] px-5 py-2 text-sm font-bold text-black transition-all hover:scale-105 shadow-[0_0_15px_rgba(198,255,0,0.2)]">
+                Enter Hub
+              </Link>
+            ) : (
               <Link href="/hub" className="rounded-lg bg-white/10 border border-white/20 px-5 py-2 text-sm font-bold text-white transition-all hover:bg-white/20">
                 Dashboard
               </Link>
-              <UserButton />
-            </Show>
+            )}
           </div>
 
           {/* ── Mobile: Builder Hub link + Enter Hub button + hamburger ── */}
           <div className="flex items-center gap-2 md:hidden">
-            {/* Builder Hub — always visible in bar */}
             <Link
               href="/hub"
               className="text-xs font-bold text-[#C6FF00] border border-[#C6FF00]/30 bg-[#C6FF00]/5 px-3 py-1.5 rounded-lg whitespace-nowrap hover:bg-[#C6FF00]/10 active:scale-95 transition-all"
@@ -66,20 +67,15 @@ export default function MarketingLayout({
               Builder Hub
             </Link>
 
-            {/* Enter Hub / Avatar — always visible in bar */}
-            <Show when="signed-out">
-              <SignInButton>
-                <button className="rounded-lg bg-[#C6FF00] px-3 py-1.5 text-xs font-bold text-black whitespace-nowrap shadow-[0_0_12px_rgba(198,255,0,0.3)] hover:bg-[#d4ff33] active:scale-95 transition-all">
-                  Enter Hub
-                </button>
-              </SignInButton>
-            </Show>
-            <Show when="signed-in">
+            {!user ? (
+              <Link href="/sign-in" className="rounded-lg bg-[#C6FF00] px-3 py-1.5 text-xs font-bold text-black whitespace-nowrap shadow-[0_0_12px_rgba(198,255,0,0.3)] hover:bg-[#d4ff33] active:scale-95 transition-all">
+                Enter Hub
+              </Link>
+            ) : (
               <Link href="/hub" className="rounded-lg bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-white/20">
                 Dashboard
               </Link>
-              <UserButton />
-            </Show>
+            )}
 
             {/* Hamburger — only toggles nav-links dropdown */}
             <button

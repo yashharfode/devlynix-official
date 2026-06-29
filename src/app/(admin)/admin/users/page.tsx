@@ -1,17 +1,20 @@
 import { prisma } from "@/lib/prisma";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Users, ShieldAlert, Zap, Search } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { RoleSelect } from "./RoleSelect";
+import { LeaderboardToggle } from "./LeaderboardToggle";
 
 // Inline Server Action to change role
 async function changeUserRole(formData: FormData) {
   "use server";
-  const { userId: adminId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const adminId = user?.id;
   if (!adminId) throw new Error("Unauthorized");
   
-  const admin = await prisma.user.findUnique({ where: { clerk_user_id: adminId } });
+  const admin = await prisma.user.findUnique({ where: { auth_id: adminId } });
   if (admin?.role !== "ADMIN") throw new Error("Forbidden");
 
   const userId = formData.get("userId") as string;
@@ -25,24 +28,54 @@ async function changeUserRole(formData: FormData) {
     data: { role: newRole }
   });
 
-  const client = await clerkClient();
-  await client.users.updateUserMetadata(targetUser.clerk_user_id, {
-    publicMetadata: { role: newRole }
-  });
-
   revalidatePath("/admin/users");
 }
 
+async function toggleLeaderboardVisibility(formData: FormData) {
+  "use server";
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const adminId = user?.id;
+  if (!adminId) throw new Error("Unauthorized");
+  
+  const admin = await prisma.user.findUnique({ where: { auth_id: adminId } });
+  if (admin?.role !== "ADMIN") throw new Error("Forbidden");
+
+  const userId = formData.get("userId") as string;
+  const currentHidden = formData.get("currentHidden") === "true";
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { is_hidden_from_leaderboard: !currentHidden }
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/hall-of-fame");
+  revalidatePath("/community");
+}
+
 export default async function AdminUsersPage() {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) redirect("/sign-in");
 
-  const currentUser = await prisma.user.findUnique({ where: { clerk_user_id: userId } });
+  const currentUser = await prisma.user.findUnique({ where: { auth_id: userId } });
   if (currentUser?.role !== "ADMIN") redirect("/hub");
 
   const users = await prisma.user.findMany({
     orderBy: { created_at: "desc" },
-    take: 100 // Limit for now, can add pagination later
+    take: 100, // Limit for now, can add pagination later
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      role: true,
+      xp: true,
+      builder_level: true,
+      is_hidden_from_leaderboard: true,
+      created_at: true,
+    }
   });
 
   return (
@@ -100,8 +133,9 @@ export default async function AdminUsersPage() {
                     <div className="text-emerald-500 font-mono font-bold">{user.xp.toLocaleString()} XP</div>
                     <div className="text-xs text-gray-500">{user.builder_level}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                  <td className="px-6 py-4 whitespace-nowrap text-right flex items-center justify-end gap-2">
                     <RoleSelect userId={user.id} currentRole={user.role} action={changeUserRole} />
+                    <LeaderboardToggle userId={user.id} isHidden={user.is_hidden_from_leaderboard} action={toggleLeaderboardVisibility} />
                   </td>
                 </tr>
               ))}

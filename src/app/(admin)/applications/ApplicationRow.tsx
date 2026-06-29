@@ -10,7 +10,7 @@ export default function ApplicationRow({ application }: { application: any }) {
 
   const handleApprove = async () => {
     setIsApproving(true);
-    const res = await approveOrganizer(application.id, application.user_id, application.user.clerk_user_id);
+    const res = await approveOrganizer(application.id, application.user_id, application.user.auth_id);
     if (res?.error) {
       alert(res.error);
       setIsApproving(false);

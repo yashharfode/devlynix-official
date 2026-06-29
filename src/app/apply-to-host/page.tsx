@@ -1,16 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { submitOrganizerApplication } from "@/app/actions/organizer";
 import { Sparkles, Building2, Globe, FileText, ArrowRight, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ApplyToHostPage() {
-  const { isSignedIn } = useUser();
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setIsSignedIn(!!data?.user);
+      setIsLoaded(true);
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,6 +37,14 @@ export default function ApplyToHostPage() {
     
     setIsSubmitting(false);
   };
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#030303]">
+        <div className="w-10 h-10 border-4 border-white/10 border-t-[#C6FF00] rounded-full animate-spin mb-4" />
+      </div>
+    );
+  }
 
   if (!isSignedIn) {
     return (

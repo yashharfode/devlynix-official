@@ -9,6 +9,7 @@ export default async function CommunityLeaderboardPage() {
 
   // Fetch top 50 users ranked by XP
   const topUsers = await prisma.user.findMany({
+    where: { is_hidden_from_leaderboard: false },
     take: 50,
     orderBy: [
       { xp: "desc" },

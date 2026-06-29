@@ -1,11 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function submitOrganizerApplication(formData: FormData) {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   
   if (!userId) {
     return { error: "You must be logged in to apply." };
@@ -22,7 +24,7 @@ export async function submitOrganizerApplication(formData: FormData) {
   try {
     // Ensure the user exists in our DB first
     const dbUser = await prisma.user.findUnique({
-      where: { clerk_user_id: userId },
+      where: { auth_id: userId },
     });
 
     if (!dbUser) {

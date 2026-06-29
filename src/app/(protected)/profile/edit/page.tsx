@@ -23,7 +23,7 @@ const ROLES_LIST = [
   "Blockchain Developer", "Other"
 ];
 
-export default function OnboardingPage() {
+export default function EditProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -195,7 +195,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    router.push('/hub');
+    router.push('/profile');
   };
 
   const renderStepIndicators = () => (
@@ -247,8 +247,8 @@ export default function OnboardingPage() {
           <div className="flex justify-center mb-4">
             <img src="https://i.ibb.co/HDHsqdqL/1000100954.png" alt="Devlynix" className="w-12 h-12 object-contain" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Initialize Profile</h1>
-          <p className="text-gray-500 font-mono text-sm">Configure your builder identity to access the network.</p>
+          <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Edit Profile</h1>
+          <p className="text-gray-500 font-mono text-sm">Update your profile details.</p>
         </div>
 
         {renderStepIndicators()}
@@ -436,12 +436,6 @@ export default function OnboardingPage() {
                     className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#C6FF00] transition-colors placeholder:text-gray-600"
                     placeholder="https://yourwebsite.com" />
                 </div>
-                <div className="flex items-center gap-3 bg-[#C6FF00]/5 border border-[#C6FF00]/20 rounded-xl px-4 py-3">
-                  <Zap className="w-4 h-4 text-[#C6FF00] flex-shrink-0" />
-                  <p className="text-xs text-gray-400 font-mono">
-                    Completing your profile earns you <span className="text-[#C6FF00] font-bold">+100 XP</span> and unlocks the <span className="text-[#C6FF00] font-bold">Initiate</span> builder level.
-                  </p>
-                </div>
               </div>
             </div>
           )}
@@ -465,9 +459,9 @@ export default function OnboardingPage() {
               <button onClick={handleSubmit} disabled={isSubmitting}
                 className="flex items-center gap-2 px-8 py-3 rounded-xl bg-[#C6FF00] text-black font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 {isSubmitting ? (
-                  <><div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> Initializing...</>
+                  <><div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> Saving...</>
                 ) : (
-                  <>Complete Setup <CheckCircle2 className="w-5 h-5" /></>
+                  <>Save Changes <CheckCircle2 className="w-5 h-5" /></>
                 )}
               </button>
             )}

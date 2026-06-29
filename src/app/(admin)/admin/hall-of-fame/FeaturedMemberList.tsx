@@ -5,6 +5,8 @@ import { deleteFeaturedMember } from "./actions";
 import { Trash2, Edit2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { FeaturedMemberForm } from "./FeaturedMemberForm";
+import { Eye, EyeOff } from "lucide-react";
+import { toggleFeaturedMemberVisibility } from "./actions";
 
 type Member = {
   id: string;
@@ -19,6 +21,7 @@ type Member = {
   demo_url: string | null;
   github_url: string | null;
   event_name: string | null;
+  is_hidden: boolean;
 };
 
 export function FeaturedMemberList({ members }: { members: Member[] }) {
@@ -34,6 +37,17 @@ export function FeaturedMemberList({ members }: { members: Member[] }) {
         toast.success(`${name} removed successfully!`);
       } catch (err: any) {
         toast.error("Failed to remove: " + (err.message || String(err)));
+      }
+    });
+  };
+
+  const handleToggleVisibility = (id: string, isHidden: boolean, name: string) => {
+    startTransition(async () => {
+      try {
+        await toggleFeaturedMemberVisibility(id, isHidden);
+        toast.success(`${name} is now ${isHidden ? 'visible' : 'hidden'}!`);
+      } catch (err: any) {
+        toast.error("Failed to update visibility: " + (err.message || String(err)));
       }
     });
   };
@@ -58,6 +72,18 @@ export function FeaturedMemberList({ members }: { members: Member[] }) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => handleToggleVisibility(m.id, m.is_hidden, m.name)}
+                  disabled={isPending}
+                  className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                    m.is_hidden 
+                      ? 'text-red-500 hover:bg-red-500/10' 
+                      : 'text-emerald-500 hover:bg-emerald-500/10'
+                  }`}
+                  title={m.is_hidden ? "Hidden from Hall of Fame" : "Visible on Hall of Fame"}
+                >
+                  {m.is_hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
                 <button 
                   onClick={() => setEditingId(editingId === m.id ? null : m.id)}
                   className={`p-2 rounded-lg transition-colors ${editingId === m.id ? 'bg-amber-500 text-black' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}

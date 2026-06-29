@@ -1,18 +1,20 @@
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Building2, Terminal, Users, PlusCircle } from "lucide-react";
 
 export default async function OrganizerDashboard() {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) redirect("/sign-in");
 
   // Securely verify role on the server
-  const user = await prisma.user.findUnique({
-    where: { clerk_user_id: userId }
+  const dbUser = await prisma.user.findUnique({
+    where: { auth_id: userId }
   });
 
-  if (user?.role !== "ORGANIZER" && user?.role !== "ADMIN") {
+  if (dbUser?.role !== "ORGANIZER" && dbUser?.role !== "ADMIN") {
     redirect("/hub");
   }
 

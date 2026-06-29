@@ -1,19 +1,21 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Users, Terminal, FileText, Activity, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminDashboardPage() {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) redirect("/sign-in");
 
   // Securely verify admin role
-  const user = await prisma.user.findUnique({
-    where: { clerk_user_id: userId }
+  const dbUser = await prisma.user.findUnique({
+    where: { auth_id: userId }
   });
 
-  if (user?.role !== "ADMIN") {
+  if (dbUser?.role !== "ADMIN") {
     redirect("/hub");
   }
 

@@ -2,10 +2,12 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function toggleWinnerStatus(projectId: string, currentStatus: boolean) {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) throw new Error("Unauthorized");
   
   // Verify admin role in a real app, assuming protected by middleware/layout

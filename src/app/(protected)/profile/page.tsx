@@ -1,15 +1,17 @@
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { User, Zap, Trophy, Briefcase, GitBranch, Link2, Globe, Edit } from "lucide-react";
 import Link from "next/link";
 
 export default async function ProfilePage() {
-  const { userId } = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) redirect("/sign-in");
 
   const profile = await prisma.user.findUnique({
-    where: { clerk_user_id: userId },
+    where: { auth_id: userId },
     include: { submissions: true }
   });
 
@@ -41,19 +43,28 @@ export default async function ProfilePage() {
             </div>
           </div>
           
-          <div className="flex gap-4">
-            <div className="bg-[#111] rounded-2xl p-4 text-center border border-[#222] min-w-[100px]">
-              <div className="text-2xl font-black text-emerald-500 mb-1 flex items-center justify-center gap-1">
-                <Trophy className="w-5 h-5" /> {profile.xp}
+          <div className="flex flex-col gap-4 w-full md:w-auto">
+            <div className="flex gap-4 w-full">
+              <div className="flex-1 bg-[#111] rounded-2xl p-4 text-center border border-[#222] min-w-[100px]">
+                <div className="text-2xl font-black text-emerald-500 mb-1 flex items-center justify-center gap-1">
+                  <Trophy className="w-5 h-5" /> {profile.xp}
+                </div>
+                <div className="text-xs text-gray-500 uppercase tracking-widest font-mono">XP</div>
               </div>
-              <div className="text-xs text-gray-500 uppercase tracking-widest font-mono">XP</div>
-            </div>
-            <div className="bg-[#111] rounded-2xl p-4 text-center border border-[#222] min-w-[100px]">
-              <div className="text-2xl font-black text-amber-500 mb-1 flex items-center justify-center gap-1">
-                <Zap className="w-5 h-5" /> {profile.streak_days}
+              <div className="flex-1 bg-[#111] rounded-2xl p-4 text-center border border-[#222] min-w-[100px]">
+                <div className="text-2xl font-black text-amber-500 mb-1 flex items-center justify-center gap-1">
+                  <Zap className="w-5 h-5" /> {profile.streak_days}
+                </div>
+                <div className="text-xs text-gray-500 uppercase tracking-widest font-mono">Streak</div>
               </div>
-              <div className="text-xs text-gray-500 uppercase tracking-widest font-mono">Streak</div>
             </div>
+            
+            <Link 
+              href="/profile/edit" 
+              className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white text-sm font-bold transition-colors"
+            >
+              <Edit className="w-4 h-4" /> Edit Profile
+            </Link>
           </div>
         </div>
       </div>

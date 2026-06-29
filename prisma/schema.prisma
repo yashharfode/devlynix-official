@@ -10,7 +10,7 @@ datasource db {
 
 model User {
   id                    String                 @id @default(uuid())
-  clerk_user_id         String                 @unique
+  auth_id               String                 @unique
   email                 String?
   full_name             String?
   username              String?                @unique
@@ -30,6 +30,7 @@ model User {
   updated_at            DateTime               @updatedAt
   role                  Role                   @default(HACKER)
   builder_level         String                 @default("Initiate")
+  is_hidden_from_leaderboard Boolean           @default(false)
   organizerApplications OrganizerApplication[]
   submissions           ProjectSubmission[]
 
@@ -116,6 +117,7 @@ model FeaturedMember {
   date_achieved       DateTime @default(now())
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
+  is_hidden           Boolean  @default(false)
 
   @@map("featured_members")
 }

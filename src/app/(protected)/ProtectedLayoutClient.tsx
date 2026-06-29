@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { UserButton, useUser, useAuth } from '@clerk/nextjs';
-import { createClerkSupabaseClient } from '@/lib/supabase';
+import { createClient } from "@/lib/supabase/client";
 import { 
   Zap, 
   Home, 
@@ -21,44 +20,22 @@ import Link from 'next/link';
 
 export default function ProtectedLayoutClient({
   children,
+  profile,
+  user
 }: {
   children: React.ReactNode;
+  profile: any;
+  user: any;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user } = useUser();
-  const { getToken } = useAuth();
   
-  const [streakDays, setStreakDays] = useState<number | null>(null);
-  const [xp, setXp] = useState<number | null>(null);
-  const [dbRole, setDbRole] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    const fetchStats = async () => {
-      try {
-        const token = await getToken({ template: 'supabase' });
-        if (!token) return;
-        const client = createClerkSupabaseClient(token);
-        const { data, error } = await client
-          .from('profiles')
-          .select('streak_days, xp, role')
-          .eq('clerk_user_id', user.id)
-          .maybeSingle();
-        if (data) {
-          setStreakDays(data.streak_days ?? 0);
-          setXp(data.xp ?? 0);
-          if (data.role) setDbRole(data.role);
-        }
-      } catch (err) {
-        console.error('Failed to fetch stats:', err);
-      }
-    };
-    fetchStats();
-  }, [user, getToken]);
-
-  const userRole = (user?.publicMetadata?.role as string | undefined) || dbRole;
+  const streakDays = profile?.streak_days ?? 0;
+  const xp = profile?.xp ?? 0;
+  const dbRole = profile?.role ?? 'HACKER';
+  const firstName = profile?.full_name ? profile.full_name.split(' ')[0] : 'Builder';
 
   const navItems = [
     { name: 'Hub', href: '/hub', icon: Home },
@@ -69,9 +46,9 @@ export default function ProtectedLayoutClient({
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
-  if (userRole === 'ADMIN') {
+  if (dbRole === 'ADMIN') {
     navItems.push({ name: 'Admin Console', href: '/admin', icon: ShieldAlert });
-  } else if (userRole === 'ORGANIZER') {
+  } else if (dbRole === 'ORGANIZER') {
     navItems.push({ name: 'Organizer Dashboard', href: '/organizer', icon: Building2 });
   } else {
     navItems.push({ name: 'Host a Hackathon', href: '/apply-to-host', icon: Building2 });
@@ -120,9 +97,15 @@ export default function ProtectedLayoutClient({
 
         <div className="p-4 border-t border-white/5">
           <div className="flex items-center gap-3 bg-[#111] p-3 rounded-xl border border-white/5">
-            <UserButton />
+            <Link href="/settings" className="w-8 h-8 rounded-full bg-[#222] flex items-center justify-center hover:bg-[#333] transition-colors overflow-hidden">
+              {user ? (
+                <img src={`https://i.pravatar.cc/150?u=${user.id}`} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <UserIcon className="w-4 h-4 text-white" />
+              )}
+            </Link>
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-bold truncate">{user?.firstName || 'Builder'}</span>
+              <span className="text-sm font-bold truncate">{firstName || 'Builder'}</span>
               <div className="flex items-center gap-2 mt-0.5">
                 {streakDays !== null && (
                   <span className="text-[10px] text-emerald-500 flex items-center gap-1 font-mono bg-emerald-900/20 px-1.5 py-0.5 rounded border border-emerald-900/30">
