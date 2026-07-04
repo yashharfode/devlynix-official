@@ -76,6 +76,10 @@ export default function OnboardingPage() {
         const data = await getProfile();
 
         if (data) {
+          if (data.username) {
+            router.push('/hub');
+            return;
+          }
           setProfileId(data.id);
           // Profile exists - pre-fill form with existing data
           setFormData(prev => ({
