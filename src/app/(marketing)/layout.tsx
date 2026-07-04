@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 import { useScrollDirection } from '@/lib/hooks/useScrollDirection';
 import Link from 'next/link';
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,12 @@ export default function MarketingLayout({
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUser(data?.user));
   }, []);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.reload();
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -52,9 +58,14 @@ export default function MarketingLayout({
                 Enter Hub
               </Link>
             ) : (
-              <Link href="/hub" className="rounded-lg bg-white/10 border border-white/20 px-5 py-2 text-sm font-bold text-white transition-all hover:bg-white/20">
-                Dashboard
-              </Link>
+              <>
+                <Link href="/hub" className="rounded-lg bg-white/10 border border-white/20 px-5 py-2 text-sm font-bold text-white transition-all hover:bg-white/20">
+                  Dashboard
+                </Link>
+                <button onClick={handleSignOut} title="Sign Out" className="rounded-lg text-red-400 border border-white/10 p-2 hover:bg-white/5 transition-all">
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </>
             )}
           </div>
 
@@ -72,9 +83,14 @@ export default function MarketingLayout({
                 Enter Hub
               </Link>
             ) : (
-              <Link href="/hub" className="rounded-lg bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-white/20">
-                Dashboard
-              </Link>
+              <>
+                <Link href="/hub" className="rounded-lg bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-white/20">
+                  Dashboard
+                </Link>
+                <button onClick={handleSignOut} title="Sign Out" className="rounded-lg text-red-400 border border-white/10 p-1.5 hover:bg-white/5 transition-all">
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </>
             )}
 
             {/* Hamburger — only toggles nav-links dropdown */}

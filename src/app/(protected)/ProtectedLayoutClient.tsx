@@ -14,7 +14,8 @@ import {
   X,
   ShieldAlert,
   Building2,
-  Trophy
+  Trophy,
+  LogOut
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -31,6 +32,12 @@ export default function ProtectedLayoutClient({
   const pathname = usePathname();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+  };
 
   const streakDays = profile?.streak_days ?? 0;
   const xp = profile?.xp ?? 0;
@@ -97,14 +104,14 @@ export default function ProtectedLayoutClient({
 
         <div className="p-4 border-t border-white/5">
           <div className="flex items-center gap-3 bg-[#111] p-3 rounded-xl border border-white/5">
-            <Link href="/settings" className="w-8 h-8 rounded-full bg-[#222] flex items-center justify-center hover:bg-[#333] transition-colors overflow-hidden">
+            <Link href="/settings" className="w-8 h-8 rounded-full bg-[#222] flex items-center justify-center hover:bg-[#333] transition-colors overflow-hidden shrink-0">
               {user ? (
                 <img src={`https://i.pravatar.cc/150?u=${user.id}`} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <UserIcon className="w-4 h-4 text-white" />
               )}
             </Link>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               <span className="text-sm font-bold truncate">{firstName || 'Builder'}</span>
               <div className="flex items-center gap-2 mt-0.5">
                 {streakDays !== null && (
@@ -119,6 +126,9 @@ export default function ProtectedLayoutClient({
                 )}
               </div>
             </div>
+            <button onClick={handleSignOut} title="Sign Out" className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/5 transition-colors shrink-0">
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </aside>
