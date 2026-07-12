@@ -62,7 +62,7 @@ export default function SignInPage() {
       if (error) {
         setErrorMsg(error.message);
       } else {
-        router.push("/onboarding");
+        router.push("/hub");
       }
     }
     setIsLoading(null);

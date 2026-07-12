@@ -15,7 +15,7 @@ export default async function ProfilePage() {
     include: { submissions: true }
   });
 
-  if (!profile) redirect("/onboarding");
+  // if (!profile) redirect("/onboarding");
 
   return (
     <div className="max-w-4xl mx-auto p-6 pb-24">
