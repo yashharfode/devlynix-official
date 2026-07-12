@@ -48,8 +48,7 @@ export default function BuilderDashboard() {
 
         if (!data) {
           // If we successfully queried but got no data, they need to onboard
-          // router.push('/onboarding');
-          // return;
+          throw new Error("No profile data found");
         }
 
         setProfile({

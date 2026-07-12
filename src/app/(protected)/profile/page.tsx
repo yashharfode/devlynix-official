@@ -10,12 +10,22 @@ export default async function ProfilePage() {
   const userId = user?.id;
   if (!userId) redirect("/sign-in");
 
-  const profile = await prisma.user.findUnique({
+  const dbProfile = await prisma.user.findUnique({
     where: { auth_id: userId },
     include: { submissions: true }
   });
 
-  // if (!profile) redirect("/onboarding");
+  const profile = dbProfile || {
+    full_name: user?.user_metadata?.full_name || 'Builder',
+    username: user?.user_metadata?.user_name || '',
+    primary_role: 'N/A',
+    builder_level: 'Initiate',
+    xp: 0,
+    streak_days: 0,
+    bio: 'Profile not found. Please complete onboarding.',
+    skills: [],
+    submissions: []
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6 pb-24">
