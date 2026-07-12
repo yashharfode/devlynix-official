@@ -28,11 +28,24 @@ export default async function ProtectedLayout({
     redirect('/sign-in');
   }
 
-  const profile = await checkOnboardingComplete(user.id);
-
-  // if (!profile) {
-  //   redirect('/onboarding');
-  // }
+  let profile = await checkOnboardingComplete(user.id);
+  
+  if (!profile) {
+    try {
+      profile = await prisma.user.create({
+        data: {
+          auth_id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || 'Builder',
+          username: user.user_metadata?.user_name || `user_${Math.floor(Math.random() * 1000000)}`,
+          role: user.email === 'yashharfode123@gmail.com' ? 'ADMIN' : 'HACKER'
+        },
+        select: { id: true, role: true, xp: true, streak_days: true, full_name: true }
+      });
+    } catch (err) {
+      console.error('Failed to auto-create profile:', err);
+    }
+  }
 
   return <ProtectedLayoutClient profile={profile} user={user}>{children}</ProtectedLayoutClient>;
 }
