@@ -30,9 +30,9 @@ export default async function ProtectedLayout({
 
   const profile = await checkOnboardingComplete(user.id);
 
-  if (!profile) {
-    redirect('/onboarding');
-  }
+  // if (!profile) {
+  //   redirect('/onboarding');
+  // }
 
   return <ProtectedLayoutClient profile={profile} user={user}>{children}</ProtectedLayoutClient>;
 }
